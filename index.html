@@ -179,7 +179,25 @@ details p{margin:8px 0 0}
 .steps{margin:0;padding-left:20px}
 .steps li{margin:4px 0}
 .avoid{margin:8px 0 0;font-size:14px;color:var(--b);font-weight:500}
-@media (max-width:480px){nav{grid-template-columns:1fr 1fr}}
+.dp{position:fixed;inset:0;z-index:70;background:var(--bg);display:none;overflow-y:auto}
+.dp.open{display:block}
+.dp-in{max-width:760px;margin:0 auto;padding:14px 12px 36px;display:flex;flex-direction:column;gap:10px}
+.dp-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.dp-pane{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:8px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.dp-pane.a{border-top:4px solid var(--a)}
+.dp-pane.b{border-top:4px solid var(--b)}
+.dp-pane h3{margin:0;font-size:14px;line-height:1.25;text-wrap:balance;min-height:36px}
+.dp-name{font-family:var(--display);font-size:12px;font-weight:700}
+.dp-pane .rp-fig{padding:0}
+.dp-cue{font-size:13px;font-weight:600;min-height:54px;text-wrap:balance}
+.dp-info{font-size:13px;min-width:0}
+.dp-info .steps{padding-left:16px}
+.dcard{margin-top:12px}
+.dcard h3{margin:0;font-size:15px}
+.dline{display:grid;grid-template-columns:86px 1fr;gap:4px 10px;font-size:14px;margin-top:6px}
+.dline b{color:var(--muted);font-weight:600}
+nav{grid-template-columns:repeat(auto-fit,minmax(100px,1fr))}
+@media (max-width:480px){nav{grid-template-columns:1fr 1fr 1fr}nav button{padding:10px 2px;font-size:14px}}
 @media (max-width:420px){.settings{grid-template-columns:1fr 1fr}.settings .field:last-child{grid-column:1/-1}.day{font-size:13px;padding:3px}}
 @media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
 </style>
@@ -197,6 +215,7 @@ details p{margin:8px 0 0}
   <nav role="tablist" aria-label="Розділи">
     <button role="tab" id="tab-exercises" data-view="exercises">Вправи</button>
     <button role="tab" id="tab-builder" data-view="builder">Тренування <span class="count" id="planCount">0</span></button>
+    <button role="tab" id="tab-program" data-view="program">Програма</button>
     <button role="tab" id="tab-recovery" data-view="recovery">Відновлення</button>
     <button role="tab" id="tab-calendar" data-view="calendar">Календар</button>
   </nav>
@@ -242,6 +261,13 @@ details p{margin:8px 0 0}
       <div class="saved" id="savedBox"></div>
     </section>
 
+    <section id="view-program" role="tabpanel" aria-labelledby="tab-program" hidden>
+      <h2>Програма на два тижні</h2>
+      <p class="lead">Розминка, основна частина й заминка. Деякі вправи ви робите однакові, деякі кожен свої. Її вправи підібрані за фазою відновлення.</p>
+      <div class="card" id="progSetup"></div>
+      <div id="progDays"></div>
+    </section>
+
     <section id="view-recovery" role="tabpanel" aria-labelledby="tab-recovery" hidden>
       <h2>Відновлення після кесаревого</h2>
       <p class="lead">Поетапний план від дихання й прогулянок до силових вправ. Наступна фаза відкривається лише після огляду лікаря.</p>
@@ -263,6 +289,19 @@ details p{margin:8px 0 0}
       <div class="card dpanel" id="dayPanel"></div>
     </section>
   </main>
+</div>
+
+<div class="dp" id="dp" role="dialog" aria-modal="true" aria-label="Тренування на двох">
+  <div class="dp-in">
+    <div class="rp-top"><div><div class="tip" id="dpProg"></div><b id="dpSess"></b></div><button class="btn small" id="dpClose">Закрити</button></div>
+    <div class="rp-bar"><i id="dpBar"></i></div>
+    <div id="dpKind"></div>
+    <div class="dp-grid" id="dpPanes"></div>
+    <div class="rp-clock" style="text-align:center"><span id="dpTime"></span><span class="tip" id="dpSub"></span></div>
+    <div class="controls" id="dpCtl"></div>
+    <div class="dp-grid" id="dpInfo"></div>
+    <p class="tip">Біль, тиск у тазі, підтікання чи випинання живота: зупиніться. Її частина підібрана за фазою відновлення.</p>
+  </div>
 </div>
 
 <div class="rp" id="rp" role="dialog" aria-modal="true" aria-label="Вправи відновлення">
@@ -339,13 +378,14 @@ const st={
   filter:{g:'Усі',lvl:0,eq:'',q:''},
   month:new Date(today.getFullYear(),today.getMonth(),1),
   sel:ymd(today),
-  rec:store.get('rec',{who:0,op:'',c3:'',c4:''})
+  rec:store.get('rec',{who:0,op:'',c3:'',c4:''}),
+  prog:store.get('prog',{phase:2,start:''})
 };
 if(!st.sessions){
   const t=new Date(today);t.setDate(t.getDate()+1);
   st.sessions=[{id:uid(),date:ymd(t),time:'08:00',title:'Ранковий заряд',minutes:14,done:[false,false],items:sample}];
 }
-const save=()=>{store.set('names',st.names);store.set('plan',st.plan);store.set('tpls',st.tpls);store.set('sessions',st.sessions);store.set('rec',st.rec)};
+const save=()=>{store.set('names',st.names);store.set('plan',st.plan);store.set('tpls',st.tpls);store.set('sessions',st.sessions);store.set('rec',st.rec);store.set('prog',st.prog)};
 
 /* ---------- header / names ---------- */
 const nA=$('#nameA'),nB=$('#nameB');
@@ -354,12 +394,13 @@ nA.value=st.names[0];nB.value=st.names[1];
 const nm=i=>esc(st.names[i]);
 
 /* ---------- routing ---------- */
-const VIEWS=['exercises','builder','recovery','calendar'];
+const VIEWS=['exercises','builder','program','recovery','calendar'];
 function show(v){
   if(!VIEWS.includes(v))v='exercises';
   VIEWS.forEach(x=>{$('#view-'+x).hidden=x!==v;$('#tab-'+x).setAttribute('aria-selected',x===v)});
   if(v==='builder')renderBuilder();
   if(v==='recovery')renderRecovery();
+  if(v==='program')renderProgram();
   if(v==='calendar')renderCalendar();
 }
 document.querySelectorAll('nav button').forEach(b=>b.addEventListener('click',()=>{
@@ -599,7 +640,7 @@ function renderDay(){
   $('#dayPanel').innerHTML=`<h2 style="font-size:17px">${d} ${MONTHS[m-1]}</h2>`+
   (ss.length?ss.map(s=>`<div class="sess" data-id="${s.id}"><div class="top"><div><b>${esc(s.title)}</b><div class="tip">${s.time?esc(s.time)+' · ':''}${s.minutes?s.minutes+' хв':'час не вказано'}${s.items?' · '+s.items.length+' вправ':''}</div></div><button class="icon-btn" data-del="${s.id}" aria-label="Видалити тренування">×</button></div>
   <div class="who">${s.rec?`<label class="${st.rec.who?'b':'a'}"><input type="checkbox" data-who="${st.rec.who}" ${s.done[st.rec.who]?'checked':''}>${s.items?'Виконано':'Пройдено'}</label>`:`<label class="a"><input type="checkbox" data-who="0" ${s.done[0]?'checked':''}>${nm(0)}</label><label class="b"><input type="checkbox" data-who="1" ${s.done[1]?'checked':''}>${nm(1)}</label>`}</div>
-  ${s.items&&s.items.length?`<div class="row"><button class="btn small" data-run="${s.id}">Запустити</button></div>`:''}</div>`).join(''):'<p class="tip" style="margin:6px 0 0">На цей день нічого не заплановано.</p>')+
+  ${(s.items&&s.items.length)||s.steps?`<div class="row"><button class="btn small" data-run="${s.id}">Запустити</button></div>`:''}</div>`).join(''):'<p class="tip" style="margin:6px 0 0">На цей день нічого не заплановано.</p>')+
   `<div class="addform"><label class="field full">Шаблон<select id="addTpl">${opts}</select></label>
   <label class="field">Назва<input id="addTitle" type="text" maxlength="40" placeholder="Назва"></label>
   <label class="field">Час<input id="addTime" type="time"></label>
@@ -613,7 +654,8 @@ $('#dayPanel').addEventListener('click',e=>{
   if(b.dataset.del){st.sessions=st.sessions.filter(s=>s.id!==b.dataset.del);save();renderCalendar()}
   else if(b.dataset.run){
     const s=st.sessions.find(x=>x.id===b.dataset.run);
-    if(s&&s.rec)openRp(s.items,s.title,s.id,false);
+    if(s&&s.steps)openDp(s.steps,s.title,s.id);
+    else if(s&&s.rec)openRp(s.items,s.title,s.id,false);
     else if(s){st.plan.items=[...s.items];st.plan.name=s.title;save();updateCount();openTimer()}
   }
   else if(b.id==='addBtn'){
@@ -825,11 +867,11 @@ $('#recPhases').addEventListener('click',e=>{
 
 /* ---------- recovery: player ---------- */
 const RP={list:[],i:0,s:'ready',acc:0,last:0,paused:false,sess:null,single:false,name:'',ex:null,els:null,demo0:0,msg:'',raf:0,lastLabel:''};
-function figSVG(ex){
+function figSVG(ex,px=''){
   return `<svg viewBox="0 0 240 140" role="img" aria-label="Схема вправи: ${esc(ex.n)}"><line class="fl" x1="10" y1="123" x2="230" y2="123"/>${ex.props||''}
-  <polyline id="fl2" class="body light" points=""/><polyline id="fa2" class="body light" points=""/>
-  <ellipse id="fhl" class="hl" cx="0" cy="0" rx="0" ry="0"/><circle id="fball" class="ball" r="0" cx="0" cy="0"/>
-  <polyline id="fl1" class="body" points=""/><path id="ft" class="body"/><polyline id="fa1" class="body"/><circle id="fh" class="head" r="8"/></svg>`;
+  <polyline id="${px}fl2" class="body light" points=""/><polyline id="${px}fa2" class="body light" points=""/>
+  <ellipse id="${px}fhl" class="hl" cx="0" cy="0" rx="0" ry="0"/><circle id="${px}fball" class="ball" r="0" cx="0" cy="0"/>
+  <polyline id="${px}fl1" class="body" points=""/><path id="${px}ft" class="body"/><polyline id="${px}fa1" class="body"/><circle id="${px}fh" class="head" r="8"/></svg>`;
 }
 const pts=(...a)=>a.map(p=>p[0].toFixed(1)+','+p[1].toFixed(1)).join(' ');
 function poseAt(ex,v){
@@ -838,8 +880,8 @@ function poseAt(ex,v){
   for(const k in B)if(!(k in r))r[k]=B[k];
   return r;
 }
-function paint(ex,v){
-  const q=poseAt(ex,v),E=RP.els;
+function paint(ex,v,E=RP.els){
+  const q=poseAt(ex,v);
   E.l1.setAttribute('points',pts(q.p,q.k,q.a,q.t));
   if(q.k2){E.l2.setAttribute('points',pts(q.p,q.k2,q.a2||q.a,q.t2||q.t))}else E.l2.setAttribute('points','');
   if(q.m){const c=[2*q.m[0]-(q.n[0]+q.p[0])/2,2*q.m[1]-(q.n[1]+q.p[1])/2];E.t.setAttribute('d',`M${q.n[0]} ${q.n[1]} Q${c[0]} ${c[1]} ${q.p[0]} ${q.p[1]}`)}
@@ -937,7 +979,193 @@ $('#rpCtl').addEventListener('click',e=>{
 });
 $('#rpClose').addEventListener('click',closeRp);
 
+/* ---------- duo program: extra exercises ---------- */
+Object.assign(RX,{
+'u-squat':{n:'Присід',reps:10,cyc:[['Вдих: присідайте',3,0,1],['Видих: встаньте',2,1,0]],
+  P:[o(ST,{e:[126,56],w:[142,56]}),{h:[96,40],n:[98,52],p:[84,92],k:[124,96],a:[112,120],t:[126,120],e:[124,64],w:[142,62]}],hl:{k:'glow',j:'p',m:'glow'},
+  steps:['Стопи на ширині плечей, руки вперед для балансу.','Відводьте таз назад і вниз, спина рівна, п\'яти на підлозі.','Піднімайтесь на видиху силою ніг.'],tip:'Коліна дивляться туди ж, куди й стопи.',avoid:''},
+'u-pushup':{n:'Віджимання',reps:8,cyc:[['Вдих: опускайтесь',2,0,1],['Видих: віджимайтесь',2,1,0]],
+  P:[{h:[172,70],n:[160,76],p:[100,97],k:[70,107],a:[40,118],t:[32,120],e:[162,98],w:[162,118]},{h:[172,102],n:[160,108],p:[100,113],k:[70,115],a:[40,119],t:[32,120],e:[142,110],w:[162,118]}],hl:{k:'glow',j:'n',m:'glow'},
+  steps:['Упор лежачи, тіло пряма лінія.','Опускайтесь, лікті під кутом близько 45°.','Видихаючи, віджимайтесь. З колін, якщо важко.'],tip:'Живіт підтягнутий, поперек не провисає.',avoid:''},
+'u-lunge':{n:'Випад назад',reps:8,cyc:[['Вдих: крок назад, вниз',3,0,1],['Видих: поверніться',2,1,0]],
+  P:[o(ST,{k2:[110,100],a2:[110,120],t2:[122,120]}),{h:[110,38],n:[110,50],p:[110,88],k:[130,90],a:[128,120],t:[140,120],k2:[94,112],a2:[68,118],t2:[60,118],e:[112,66],w:[114,84]}],hl:{k:'glow',j:'p',m:'glow'},
+  steps:['Стійте прямо, стопи на ширині таза.','Зробіть крок назад і опустіться, переднє коліно над стопою.','Поверніться у вихідне положення. Змінюйте ногу.'],tip:'Корпус прямий, погляд уперед.',avoid:''},
+'u-plank':{n:'Планка на передпліччях',dur:40,showReps:false,cyc:[['Тримайте лінію, дихайте рівно',5,0,.3],['Тримайте лінію, дихайте рівно',5,.3,0]],
+  P:[{h:[170,78],n:[158,84],p:[100,100],k:[70,109],a:[40,117],t:[30,119],e:[154,116],w:[176,116]},{h:[170,76],n:[158,82],p:[100,98],k:[70,108],a:[40,117],t:[30,119],e:[154,116],w:[176,116]}],hl:{k:'glow',j:'p',m:'glow'},
+  steps:['Передпліччя на підлозі, лікті під плечима.','Тіло пряма лінія від п\'ят до голови.','Живіт і сідниці напружені, дихайте рівно.'],tip:'Краще коротше, але з рівною спиною.',avoid:''},
+'u-armcircle':{n:'Кола руками',reps:8,cyc:[['Рука вгору й назад колом',3,0,1],['Вниз і вперед',3,1,0]],
+  P:[o(ST,{e:[112,22],w:[112,4]}),o(ST,{e:[96,58],w:[90,76]})],hl:{k:'glow',j:'n',m:'glow'},
+  steps:['Станьте рівно, стопи на ширині плечей.','Робіть повільні кола прямими руками.','Через 4 кола змініть напрямок.'],tip:'Розкриває плечі й розігріває спину.',avoid:''},
+'u-neck':{n:'Нахили голови',reps:5,cyc:[['Нахиліть голову вбік, дихайте рівно',4,0,1],['Тепер на другий бік',4,1,0]],
+  P:[o(ST,{h:[103,30]}),o(ST,{h:[117,30]})],hl:{k:'glow',j:'n',m:'glow'},
+  steps:['Станьте або сядьте рівно, плечі опущені.','Повільно нахиліть вухо до плеча.','Змініть бік. Без ривків.'],tip:'Добре розслаблює шию після годування й носіння.',avoid:''}
+});
+
+/* ---------- duo program: generator ---------- */
+const SL={
+ A:[{h:'u-squat',r:{1:'r-ballsqueeze',2:'r-ballsqueeze',3:'r-wallsit',4:'r-wallsit'}},
+    {h:'u-pushup',r:{1:'r-tra',2:'r-tra',3:'r-wallpush',4:'r-wallpush'}},
+    {h:'r-bridge',r:{1:'r-kegel',2:'r-kegel',3:'r-bridge',4:'r-bridge'}},
+    {h:'u-plank',r:{1:'r-heelslide',2:'r-heelslide',3:'r-catcow',4:'r-plank'}}],
+ B:[{h:'u-lunge',r:{1:'r-heelslide',2:'r-heelslide',3:'r-sit2stand',4:'r-sit2stand'}},
+    {h:'r-hinge',r:{1:'r-tra',2:'r-tra',3:'r-calf',4:'r-hinge'}},
+    {h:'r-birddog',r:{1:'r-tilt',2:'r-tilt',3:'r-catcow',4:'r-birddog'}},
+    {h:'r-wallsit',r:{1:'r-ballsqueeze',2:'r-ballsqueeze',3:'r-wallsit',4:'r-wallsit'}}]
+};
+const WARM=['r-breath','u-armcircle','r-shoulder'],COOL=['u-neck','r-breath'];
+const WALKP={1:'r-walk5',2:'r-walk15',3:'r-walk20',4:'r-walk30'};
+function recPhaseOn(t0){
+  const R=st.rec;if(!R.op)return null;
+  const days=Math.floor((t0-pd(R.op))/864e5);if(days<0)return 1;
+  if(days<14)return 1;
+  if(!R.c3||t0<pd(R.c3))return 2;
+  if(!R.c4||t0<pd(R.c4))return 3;
+  return 4;
+}
+const herPhase=d=>recPhaseOn(d)||st.prog.phase;
+function buildDuo(startStr){
+  const start=pd(startStr),out=[];let n=0;
+  for(let i=0;i<14;i++){
+    const d=addD(start,i),w=(d.getDay()+6)%7,ph=herPhase(d);
+    let title,steps;
+    const sw=WARM.map(id=>({k:'warm',h:id,r:id})),sc=COOL.map(id=>({k:'cool',h:id,r:id}));
+    if(w===0||w===2||w===4){
+      const key=n%2===0?'A':'B';n++;
+      title='Удвох · Сила '+key;
+      steps=[...sw,...SL[key].map(sl=>({k:'main',h:sl.h,r:sl.r[ph]})),...sc];
+    }else if(w===3||w===6){
+      title='Удвох · Прогулянка разом';
+      steps=[{k:'warm',h:'r-breath',r:'r-breath'},{k:'walk',h:WALKP[ph],r:WALKP[ph]},...sc];
+    }else continue;
+    out.push({date:ymd(d),title,steps,ph});
+  }
+  return out;
+}
+const stepSecs=s=>Math.max(exTotal(RX[s.h]),exTotal(RX[s.r]));
+const duoMins=steps=>minsOf(steps.reduce((a,s)=>a+stepSecs(s),0));
+function tomorrowStr(){const t=new Date(today);t.setDate(t.getDate()+1);return ymd(t)}
+function genDuo(){
+  const start=st.prog.start||tomorrowStr();
+  const keep={};st.sessions.forEach(s=>{if(s.src==='duo')keep[s.date+'|'+s.title]=s.done});
+  st.sessions=st.sessions.filter(s=>s.src!=='duo');
+  const plan=buildDuo(start);
+  plan.forEach(p=>st.sessions.push({id:uid(),date:p.date,time:'',title:p.title,minutes:duoMins(p.steps),done:keep[p.date+'|'+p.title]||[false,false],items:null,steps:p.steps,duo:true,src:'duo'}));
+  save();return plan.length;
+}
+const DAYN=['Нд','Пн','Вт','Ср','Чт','Пт','Сб'];
+function renderProgram(){
+  const P=st.prog,auto=!!st.rec.op;
+  if(!P.start)P.start=tomorrowStr();
+  $('#progSetup').innerHTML=`<div class="setup-grid">
+    <label class="field">Початок<input id="pStart" type="date" value="${P.start}"></label>
+    <label class="field">Її фаза відновлення${auto?'':''}<select id="pPhase" ${auto?'disabled':''}>${[1,2,3,4].map(i=>`<option value="${i}" ${(auto?recPhaseOn(new Date(today.getFullYear(),today.getMonth(),today.getDate())):P.phase)==i?'selected':''}>Фаза ${i}</option>`).join('')}</select></label>
+    <div class="tip full">${auto?'Фаза рахується з дати операції у вкладці «Відновлення».':'Дату операції у вкладці «Відновлення» ще не вказано. Оберіть фазу вручну: 1 це перші 2 тижні, 2 це тижні 2–6 до огляду, 3 і 4 лише після дозволу лікаря.'}</div>
+    <button class="btn primary full" id="pGen">Розписати в календар</button></div><div class="status" id="pStatus" hidden></div>`;
+  const plan=buildDuo(P.start);
+  $('#progDays').innerHTML=plan.map(p=>{
+    const d=pd(p.date);
+    const by=k=>p.steps.filter(s=>s.k===k);
+    const row=s=>s.h===s.r?`<b>Разом</b><span>${esc(RX[s.h].n)}</span>`:`<b>${nm(0)}</b><span>${esc(RX[st.rec.who===0?s.r:s.h].n)}</span><b>${nm(1)}</b><span>${esc(RX[st.rec.who===1?s.r:s.h].n)}</span>`;
+    const blk=(t,k)=>by(k).length?`<div class="tip" style="margin-top:8px;font-weight:700">${t}</div><div class="dline">${by(k).map(row).join('')}</div>`:'';
+    return `<article class="card dcard"><div class="wk-head"><h3>${DAYN[d.getDay()]}, ${d.getDate()}.${pad(d.getMonth()+1)} · ${p.title.replace('Удвох · ','')}</h3><button class="btn small primary" data-pr="${p.date}">Запустити</button></div>
+    <div class="tip">${duoMins(p.steps)} хв · її фаза ${p.ph}</div>${blk('Розминка','warm')}${blk('Основна частина','main')}${blk('Прогулянка','walk')}${blk('Заминка','cool')}</article>`}).join('');
+}
+$('#progSetup').addEventListener('change',e=>{
+  if(e.target.id==='pStart'&&e.target.value)st.prog.start=e.target.value;
+  if(e.target.id==='pPhase')st.prog.phase=+e.target.value;
+  save();renderProgram();
+});
+$('#progSetup').addEventListener('click',e=>{
+  if(e.target.id==='pGen'){
+    const n=genDuo();const b=$('#pStatus');b.hidden=false;
+    b.innerHTML=`Додано в календар: ${n} занять. <button class="btn small" id="pCal" style="margin-left:6px">Відкрити календар</button>`;
+  }
+  if(e.target.id==='pCal'){const d=pd(st.prog.start);st.month=new Date(d.getFullYear(),d.getMonth(),1);st.sel=st.prog.start;try{location.hash='calendar'}catch(err){}show('calendar')}
+});
+$('#progDays').addEventListener('click',e=>{
+  const b=e.target.closest('[data-pr]');if(!b)return;
+  const p=buildDuo(st.prog.start).find(x=>x.date===b.dataset.pr);
+  if(p)openDp(p.steps,p.title,null);
+});
+
+/* ---------- duo player (split screen) ---------- */
+const DP={steps:[],i:0,s:'ready',acc:0,paused:false,last:0,raf:0,sess:null,name:'',demo0:0,ex:[null,null],els:[null,null],lbl:['',''],tot:0};
+const DK={warm:'Розминка',main:'Основна частина',cool:'Заминка',walk:'Прогулянка разом'};
+const dpEx=(s,i)=>RX[i===st.rec.who?s.r:s.h];
+const elsFor=px=>({l1:$('#'+px+'fl1'),l2:$('#'+px+'fl2'),t:$('#'+px+'ft'),a1:$('#'+px+'fa1'),a2:$('#'+px+'fa2'),h:$('#'+px+'fh'),hl:$('#'+px+'fhl'),ball:$('#'+px+'fball')});
+function openDp(steps,name,sess){
+  Object.assign(DP,{steps,i:0,sess,name});
+  $('#dp').classList.add('open');document.body.style.overflow='hidden';$('#dpSess').textContent=name;
+  loadDp();cancelAnimationFrame(DP.raf);DP.last=performance.now();DP.raf=requestAnimationFrame(dframe);
+}
+function closeDp(){cancelAnimationFrame(DP.raf);$('#dp').classList.remove('open');document.body.style.overflow=''}
+function loadDp(){
+  const sp=DP.steps[DP.i];DP.s='ready';DP.acc=0;DP.paused=false;DP.demo0=performance.now();DP.lbl=['',''];
+  DP.ex=[dpEx(sp,0),dpEx(sp,1)];DP.tot=Math.max(exTotal(DP.ex[0]),exTotal(DP.ex[1]));
+  const tg=sp.h===sp.r;
+  $('#dpProg').textContent=`Крок ${DP.i+1} з ${DP.steps.length}`;
+  $('#dpBar').style.width='0%';
+  $('#dpKind').innerHTML=`<span class="tag ${tg?'together':'turns'}">${tg?'Разом':'Кожен своє'}</span> <b>${DK[sp.k]}</b>`;
+  $('#dpPanes').style.display='';$('#dpInfo').style.display='';
+  $('#dpPanes').innerHTML=[0,1].map(i=>`<div class="dp-pane ${i?'b':'a'}"><div class="dp-name" style="color:var(--${i?'b':'a'})">${nm(i)}</div><h3>${esc(DP.ex[i].n)}</h3><div class="rp-fig">${figSVG(DP.ex[i],'p'+i)}</div><div class="dp-cue" id="dpL${i}"></div><div class="tip" id="dpR${i}"></div></div>`).join('');
+  DP.els=[elsFor('p0'),elsFor('p1')];
+  $('#dpInfo').innerHTML=[0,1].map(i=>`<div class="dp-info card" style="padding:10px"><b style="color:var(--${i?'b':'a'})">${nm(i)}</b><ol class="steps">${DP.ex[i].steps.map(s=>`<li>${esc(s)}</li>`).join('')}</ol>${DP.ex[i].avoid?`<p class="avoid">${esc(DP.ex[i].avoid)}</p>`:''}</div>`).join('');
+  dpCtl();
+}
+function dpCtl(){
+  const c=$('#dpCtl'),n=DP.steps.length;
+  if(DP.s==='ready')c.innerHTML=(DP.i>0?'<button class="btn big" data-a="back">← Назад</button>':'')+'<button class="btn primary big" data-a="start">Старт</button>'+(DP.i<n-1?'<button class="btn big" data-a="skip">Далі →</button>':'');
+  else if(DP.s==='run')c.innerHTML=`<button class="btn big" data-a="pause">${DP.paused?'Продовжити':'Пауза'}</button><button class="btn big" data-a="stop">Зупинити</button>`;
+  else c.innerHTML='<button class="btn primary big" data-a="mark">Позначити: виконали обоє</button><button class="btn big" data-a="close">Закрити</button>';
+}
+function dpNext(){
+  if(DP.i<DP.steps.length-1){DP.i++;loadDp();$('#dpSub').textContent='✓ Крок виконано. Натисніть «Старт», коли будете готові.'}
+  else{
+    DP.s='end';$('#dpPanes').style.display='none';$('#dpInfo').style.display='none';
+    $('#dpKind').innerHTML='<b>Тренування завершено. Молодці обоє.</b>';
+    $('#dpTime').textContent='✓';$('#dpSub').textContent='Відпочиньте й попийте води.';$('#dpBar').style.width='100%';$('#dpProg').textContent='Готово';dpCtl();
+  }
+}
+function dframe(now){
+  if(!$('#dp').classList.contains('open'))return;
+  const dt=Math.min(.25,(now-DP.last)/1000);DP.last=now;
+  if(DP.s!=='end'){
+    let el;
+    if(DP.s==='run'){
+      if(!DP.paused)DP.acc+=dt;el=DP.acc;
+      if(DP.acc>=DP.tot){beep(988,.4);dpNext();DP.raf=requestAnimationFrame(dframe);return}
+    }else el=(now-DP.demo0)/1000;
+    for(let i=0;i<2;i++){
+      const ex=DP.ex[i],tot=exTotal(ex),done=DP.s==='run'&&DP.acc>=tot;
+      const c=done?{l:'✓ Готово. Відпочиньте до сигналу',v:0}:cycleAt(ex,el);
+      paint(ex,c.v,DP.els[i]);
+      if(c.l!==DP.lbl[i]){DP.lbl[i]=c.l;$('#dpL'+i).textContent=c.l}
+      $('#dpR'+i).textContent=DP.s==='run'?(ex.showReps===false||done?'':`повтор ${Math.min(ex.reps,Math.floor(DP.acc/cycLen(ex))+1)} з ${ex.reps}`):(ex.showReps===false?mmss(tot):`${ex.reps} повторів`);
+    }
+    if(DP.s==='run'){$('#dpTime').textContent=mmss(DP.tot-DP.acc);$('#dpSub').textContent=DP.paused?'пауза':'';$('#dpBar').style.width=(DP.acc/DP.tot*100)+'%'}
+    else{$('#dpTime').textContent=mmss(DP.tot);if(!$('#dpSub').textContent.startsWith('✓'))$('#dpSub').textContent='натисніть «Старт»'}
+  }
+  DP.raf=requestAnimationFrame(dframe);
+}
+$('#dpCtl').addEventListener('click',e=>{
+  const b=e.target.closest('[data-a]');if(!b)return;const a=b.dataset.a;
+  if(a==='start'){beep(880,.2);DP.s='run';DP.acc=0;DP.paused=false;DP.lbl=['',''];$('#dpSub').textContent='';dpCtl()}
+  else if(a==='pause'){DP.paused=!DP.paused;dpCtl()}
+  else if(a==='stop'){DP.s='ready';DP.acc=0;DP.demo0=performance.now();DP.lbl=['',''];$('#dpBar').style.width='0%';$('#dpSub').textContent='';dpCtl()}
+  else if(a==='skip'){DP.i++;loadDp();$('#dpSub').textContent=''}
+  else if(a==='back'){DP.i--;loadDp();$('#dpSub').textContent=''}
+  else if(a==='close')closeDp();
+  else if(a==='mark'){
+    if(DP.sess){const s=st.sessions.find(x=>x.id===DP.sess);if(s)s.done=[true,true]}
+    else st.sessions.push({id:uid(),date:ymd(new Date()),time:'',title:DP.name,minutes:duoMins(DP.steps),done:[true,true],items:null,steps:DP.steps,duo:true,src:'duo'});
+    save();closeDp();st.sel=ymd(new Date());st.month=new Date(today.getFullYear(),today.getMonth(),1);
+    try{location.hash='calendar'}catch(err){}show('calendar');
+  }
+});
+$('#dpClose').addEventListener('click',closeDp);
+
 /* ---------- init ---------- */
+
 renderFilters();renderEx();updateCount();
 show(location.hash.slice(1)||'exercises');
 })();
