@@ -769,7 +769,8 @@ function genRec(){
   const keep={};st.sessions.forEach(s=>{if(s.src==='rec')keep[s.date+'|'+s.title]=s.done});
   st.sessions=st.sessions.filter(s=>s.src!=='rec');
   const out=[];
-  const add=(d,title,items)=>{const date=ymd(d);out.push({id:uid(),date,time:'',title,minutes:items?minsOf(secs(items)):0,done:keep[date+'|'+title]||[false,false],items:items?[...items]:null,rec:true,src:'rec'})};
+  const t0=new Date(today.getFullYear(),today.getMonth(),today.getDate());
+  const add=(d,title,items)=>{const date=ymd(d);if(d<t0&&!keep[date+'|'+title])return;out.push({id:uid(),date,time:'',title,minutes:items?minsOf(secs(items)):0,done:keep[date+'|'+title]||[false,false],items:items?[...items]:null,rec:true,src:'rec'})};
   const wd=d=>(d.getDay()+6)%7;
   for(let i=1;i<=13;i++)add(addD(op,i),'Фаза 1 · '+WO.P1.t,WO.P1.items);
   const p2End=c3?addD(c3,-1):addD(op,41);
@@ -810,6 +811,7 @@ function recStatus(){
   const ph=recPhaseNow();
   let s=`Зараз ${Math.floor(days/7)+1}-й тиждень після операції, фаза ${ph}.`;
   if(ph===2&&days>=42)s+=' Вам час на огляд лікаря. Без дозволу до фази 3 не переходьте.';
+  if(ph===2&&days>=84)s+=' Минуло понад 12 тижнів. Якщо лікар уже дозволив навантаження, вкажіть дати дозволу, і фаза зміниться.';
   if(ph===3&&days>=84&&!R.c4)s+=' Для фази 4 потрібен дозвіл лікаря й оцінка тазового дна.';
   return s;
 }
@@ -1059,7 +1061,7 @@ function renderProgram(){
   $('#progSetup').innerHTML=`<div class="setup-grid">
     <label class="field">Початок<input id="pStart" type="date" value="${P.start}"></label>
     <label class="field">Її фаза відновлення${auto?'':''}<select id="pPhase" ${auto?'disabled':''}>${[1,2,3,4].map(i=>`<option value="${i}" ${(auto?recPhaseOn(new Date(today.getFullYear(),today.getMonth(),today.getDate())):P.phase)==i?'selected':''}>Фаза ${i}</option>`).join('')}</select></label>
-    <div class="tip full">${auto?'Фаза рахується з дати операції у вкладці «Відновлення».':'Дату операції у вкладці «Відновлення» ще не вказано. Оберіть фазу вручну: 1 це перші 2 тижні, 2 це тижні 2–6 до огляду, 3 і 4 лише після дозволу лікаря.'}</div>
+    <div class="tip full">${auto?'Фаза рахується з дати операції та дат дозволу лікаря у вкладці «Відновлення». Без дат дозволу вона не вища за 2.':'Дату операції у вкладці «Відновлення» ще не вказано. Оберіть фазу вручну: 1 це перші 2 тижні, 2 це тижні 2–6 до огляду, 3 і 4 лише після дозволу лікаря.'}</div>
     <button class="btn primary full" id="pGen">Розписати в календар</button></div><div class="status" id="pStatus" hidden></div>`;
   const plan=buildDuo(P.start);
   $('#progDays').innerHTML=plan.map(p=>{
