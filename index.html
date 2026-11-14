@@ -179,6 +179,12 @@ details p{margin:8px 0 0}
 .steps{margin:0;padding-left:20px}
 .steps li{margin:4px 0}
 .avoid{margin:8px 0 0;font-size:14px;color:var(--b);font-weight:500}
+.mrow{display:grid;grid-template-columns:48px 1fr;gap:4px 10px;padding:10px 0;border-top:1px solid var(--line)}
+.mrow .tm{color:var(--muted);font-size:13px;font-weight:600;font-variant-numeric:tabular-nums}
+.mx{font-size:13px;color:var(--a);font-weight:600}
+.shopi{display:flex;gap:8px;align-items:center;padding:6px 0;cursor:pointer}
+.shopi input{width:20px;height:20px;flex:none}
+.shopi.done{text-decoration:line-through;opacity:.55}
 .dp{position:fixed;inset:0;z-index:70;background:var(--bg);display:none;overflow-y:auto}
 .dp.open{display:block}
 .dp-in{max-width:760px;margin:0 auto;padding:14px 12px 36px;display:flex;flex-direction:column;gap:10px}
@@ -216,6 +222,7 @@ nav{grid-template-columns:repeat(auto-fit,minmax(100px,1fr))}
     <button role="tab" id="tab-exercises" data-view="exercises">Вправи</button>
     <button role="tab" id="tab-builder" data-view="builder">Тренування <span class="count" id="planCount">0</span></button>
     <button role="tab" id="tab-program" data-view="program">Програма</button>
+    <button role="tab" id="tab-menu" data-view="menu">Меню</button>
     <button role="tab" id="tab-recovery" data-view="recovery">Відновлення</button>
     <button role="tab" id="tab-calendar" data-view="calendar">Календар</button>
   </nav>
@@ -266,6 +273,17 @@ nav{grid-template-columns:repeat(auto-fit,minmax(100px,1fr))}
       <p class="lead">Розминка, основна частина й заминка. Деякі вправи ви робите однакові, деякі кожен свої. Її вправи підібрані за фазою відновлення.</p>
       <div class="card" id="progSetup"></div>
       <div id="progDays"></div>
+    </section>
+
+    <section id="view-menu" role="tabpanel" aria-labelledby="tab-menu" hidden>
+      <h2>Меню на тиждень</h2>
+      <p class="lead">Швидкі страви до 25 хвилин і заготовки на неділю. Юля худне повільно й годує, ви їсте ті самі страви з додатками.</p>
+      <div class="warn" id="menuWarn"></div>
+      <div class="chips" id="menuDays" style="margin-bottom:12px"></div>
+      <div class="card" id="menuDay"></div>
+      <div class="card" id="menuPrep" style="margin-top:12px"></div>
+      <h2 style="margin-top:20px;font-size:17px">Список покупок на тиждень</h2>
+      <div class="card" id="menuShop"></div>
     </section>
 
     <section id="view-recovery" role="tabpanel" aria-labelledby="tab-recovery" hidden>
@@ -396,13 +414,14 @@ nA.value=st.names[0];nB.value=st.names[1];
 const nm=i=>esc(st.names[i]);
 
 /* ---------- routing ---------- */
-const VIEWS=['exercises','builder','program','recovery','calendar'];
+const VIEWS=['exercises','builder','program','menu','recovery','calendar'];
 function show(v){
   if(!VIEWS.includes(v))v='exercises';
   VIEWS.forEach(x=>{$('#view-'+x).hidden=x!==v;$('#tab-'+x).setAttribute('aria-selected',x===v)});
   if(v==='builder')renderBuilder();
   if(v==='recovery')renderRecovery();
   if(v==='program')renderProgram();
+  if(v==='menu')renderMenu();
   if(v==='calendar')renderCalendar();
 }
 document.querySelectorAll('nav button').forEach(b=>b.addEventListener('click',()=>{
@@ -1254,6 +1273,58 @@ $('#dpCtl').addEventListener('click',e=>{
   }
 });
 $('#dpClose').addEventListener('click',closeDp);
+
+/* ---------- menu ---------- */
+const MEALS={
+ es1:{n:"Банан і жменя мигдалю",t:1,k:200,x:"+ ще один банан",ing:[["Банани",2,"шт","o"],["Мигдаль",30,"г","i"]]},
+ es2:{n:"Тост із сиром і огірком",t:3,k:210,x:"+ ще один тост",ing:[["Хліб цільнозерновий",2,"скибки","c"],["Сир кисломолочний",60,"г","d"],["Огірки",1,"шт","o"]]},
+ es3:{n:"Йогурт із ягодами й гранолою",t:2,k:190,x:"+ більша порція граноли",ing:[["Йогурт натуральний",300,"г","d"],["Ягоди (можна заморожені)",150,"г","o"],["Граноли",30,"г","c"]]},
+ br1:{n:"Омлет із шпинатом і помідором, тост",t:10,k:390,x:"+ ще 2 яйця й тост",ing:[["Яйця",4,"шт","d"],["Помідори",1,"шт","o"],["Шпинат",60,"г","o"],["Хліб цільнозерновий",2,"скибки","c"],["Олія",1,"ст. л.","i"]]},
+ br2:{n:"Вівсянка з яблуком і насінням",t:8,k:380,x:"+ ложка арахісової пасти",ing:[["Вівсяні пластівці",100,"г","c"],["Молоко",400,"мл","d"],["Яблука",2,"шт","o"],["Насіння льону чи гарбуза",20,"г","i"]]},
+ br3:{n:"Сир із ягодами й тост",t:3,k:380,x:"+ ще тост із медом",ing:[["Сир кисломолочний",300,"г","d"],["Ягоди (можна заморожені)",150,"г","o"],["Хліб цільнозерновий",2,"скибки","c"],["Мед",2,"ч. л.","i"]]},
+ br4:{n:"Тости з яйцем і помідором",t:8,k:380,x:"+ ще яйце й тост",ing:[["Хліб цільнозерновий",4,"скибки","c"],["Яйця",3,"шт","d"],["Помідори",2,"шт","o"],["Сир твердий",40,"г","d"]]},
+ lu1:{n:"Гречка з куркою й овочами",t:25,k:480,x:"+ більша порція гречки",ing:[["Гречка",160,"г","c"],["Куряче філе",300,"г","m"],["Цибуля",1,"шт","o"],["Морква",1,"шт","o"],["Олія",1,"ст. л.","i"]]},
+ lu2:{n:"Борщ зі сметаною",t:10,k:440,x:"+ 2 скибки хліба",ing:[["Буряк",2,"шт","o"],["Капуста білокачанна",300,"г","o"],["Картопля",2,"шт","o"],["Яловичина",250,"г","m"],["Сметана",50,"г","d"]]},
+ lu3:{n:"Суп-пюре з червоної сочевиці",t:20,k:440,x:"+ тост із сиром",ing:[["Сочевиця червона",150,"г","c"],["Морква",2,"шт","o"],["Цибуля",1,"шт","o"],["Йогурт натуральний",60,"г","d"]]},
+ lu4:{n:"Булгур з індичкою й перцем",t:25,k:490,x:"+ більша порція булгуру",ing:[["Булгур",160,"г","c"],["Філе індички",300,"г","m"],["Перець солодкий",2,"шт","o"],["Цибуля",1,"шт","o"]]},
+ sn1:{n:"Яблуко й трохи сиру",t:2,k:210,x:"+ горіхи",ing:[["Яблука",2,"шт","o"],["Сир твердий",60,"г","d"]]},
+ sn2:{n:"Хумус з морквою й огірком",t:5,k:230,x:"+ хліб чи лаваш",ing:[["Хумус",150,"г","i"],["Морква",2,"шт","o"],["Огірки",1,"шт","o"]]},
+ sn3:{n:"Кефір і банан",t:1,k:250,x:"+ жменя горіхів",ing:[["Кефір",400,"мл","d"],["Банани",2,"шт","o"]]},
+ di1:{n:"Риба із запечених овочів і картоплі",t:25,k:520,x:"+ більше картоплі",ing:[["Риба (хек чи лосось)",400,"г","m"],["Картопля",3,"шт","o"],["Броколі",300,"г","o"],["Олія",1,"ст. л.","i"]]},
+ di2:{n:"Куряче філе, кус-кус і салат",t:20,k:500,x:"+ більша порція кус-кусу",ing:[["Куряче філе",300,"г","m"],["Кус-кус",120,"г","c"],["Огірки",2,"шт","o"],["Помідори",2,"шт","o"],["Олія оливкова",1,"ст. л.","i"]]},
+ di3:{n:"Тушкована капуста з індичкою",t:25,k:470,x:"+ 2 скибки хліба",ing:[["Капуста білокачанна",600,"г","o"],["Фарш індички",300,"г","m"],["Морква",1,"шт","o"],["Цибуля",1,"шт","o"],["Томатна паста",1,"ст. л.","i"]]},
+ di4:{n:"Паста з тунцем і томатами",t:15,k:540,x:"+ більша порція пасти",ing:[["Паста цільнозернова",160,"г","c"],["Тунець консервований",185,"г","m"],["Томати у власному соку",400,"г","i"],["Цибуля",1,"шт","o"]]},
+ di5:{n:"Запечені овочі з фетою й яйцем",t:25,k:480,x:"+ 2 скибки хліба",ing:[["Кабачки",2,"шт","o"],["Перець солодкий",2,"шт","o"],["Фета",120,"г","d"],["Яйця",4,"шт","d"]]},
+ di6:{n:"Рагу з квасолею й овочами",t:25,k:480,x:"+ 2 скибки хліба",ing:[["Квасоля консервована",400,"г","i"],["Кабачки",1,"шт","o"],["Помідори",3,"шт","o"],["Цибуля",1,"шт","o"]]},
+ ev1:{n:"Кефір чи йогурт",t:1,k:150,x:"—",ing:[["Кефір",300,"мл","d"]]},
+ ev2:{n:"Мандарин і горіхи",t:1,k:170,x:"—",ing:[["Мандарини",2,"шт","o"],["Горіхи",40,"г","i"]]}
+};
+const MSLOT=[["Ранковий перекус","06:30"],["Сніданок","08:30"],["Обід","13:00"],["Перекус","16:00"],["Вечеря","19:00"],["Вечірній перекус","21:00"]];
+const MDAYS=[["Пн",["es1","br1","lu1","sn1","di1","ev1"]],["Вт",["es2","br2","lu1","sn2","di2","ev2"]],["Ср",["es3","br3","lu1","sn3","di3","ev1"]],["Чт",["es1","br4","lu2","sn1","di4","ev2"]],["Пт",["es2","br2","lu2","sn2","di5","ev1"]],["Сб",["es3","br1","lu3","sn3","di6","ev2"]],["Нд",["es2","br4","lu4","sn2","di1","ev1"]]];
+const MCAT={o:"Овочі та фрукти",m:"Мʼясо та риба",d:"Молочне та яйця",c:"Крупи та хліб",i:"Інше"};
+st.menuDay=(today.getDay()+6)%7;
+const shopDone=()=>store.get("shop",{});
+function renderMenu(){
+  $("#menuWarn").innerHTML=`<details open><summary>Принципи для Юлі</summary><ul>
+   <li>Вона годує, тому не опускається нижче 1800 ккал на день: менше може зменшити молоко. Тут у кожному дні приблизно 1900–2000 ккал.</li>
+   <li>Темп схуднення повільний: близько 0,5 кг на тиждень, не швидше. Якщо голодна чи втомлена, додайте перекус.</li>
+   <li>Три основні прийоми й 2–3 перекуси, білок у кожному. Більше води, кава й чай не більше трьох чашок.</li>
+   <li>Цифри орієнтовні. Алергії, вітаміни й точну норму краще обговорити з лікарем чи дієтологом.</li></ul></details>`;
+  $("#menuDays").innerHTML=MDAYS.map((d,i)=>`<button class="chip" data-md="${i}" aria-pressed="${i===st.menuDay}">${d[0]}</button>`).join("");
+  const ids=MDAYS[st.menuDay][1],tot=ids.reduce((a,id)=>a+MEALS[id].k,0);
+  $("#menuDay").innerHTML=`<div class="wk-head"><h3 style="margin:0;font-size:16px">${["Понеділок","Вівторок","Середа","Четвер","Пʼятниця","Субота","Неділя"][st.menuDay]}</h3><span class="tag together">Юля ≈ ${tot} ккал</span></div>`+
+   ids.map((id,i)=>{const m=MEALS[id];return `<div class="mrow"><div class="tm">${MSLOT[i][1]}</div><div><div class="tip" style="font-size:12px">${MSLOT[i][0]}</div><b>${m.n}</b><div class="tip">${m.t} хв · ≈ ${m.k} ккал для Юлі</div>${m.x!=="—"?`<div class="mx">Вам: ${m.x}</div>`:""}<details><summary>Склад на двох</summary><div class="tip">${m.ing.map(g=>g[0]+" "+g[1]+" "+g[2]).join(", ")}</div></details></div></div>`}).join("");
+  $("#menuPrep").innerHTML=`<h3 style="margin:0 0 6px;font-size:15px">Неділя, близько 60 хвилин</h3><ul class="steps"><li>Зваріть гречку й запечіть куряче філе на обід Пн–Ср.</li><li>Зваріть борщ на Чт–Пт.</li><li>Наріжте овочі для запікання й помийте ягоди.</li><li>Увечері залиште в холодильнику перекуси на ранок: банан, горіхи, йогурт.</li></ul><p class="tip" style="margin:6px 0 0">Ранковий перекус готовий заздалегідь, щоб не готувати, коли малюк уже прокинувся.</p>`;
+  const agg={};
+  MDAYS.forEach(d=>d[1].forEach(id=>MEALS[id].ing.forEach(g=>{const k=g[0]+"|"+g[2];if(!agg[k])agg[k]={n:g[0],q:0,u:g[2],c:g[3]};agg[k].q+=g[1]})));
+  const done=shopDone();
+  $("#menuShop").innerHTML=Object.keys(MCAT).map(c=>{
+    const rows=Object.entries(agg).filter(([k,v])=>v.c===c).sort((a,b)=>a[1].n.localeCompare(b[1].n,"uk"));
+    return `<div class="wk"><b>${MCAT[c]}</b>${rows.map(([k,v])=>`<label class="shopi ${done[k]?"done":""}"><input type="checkbox" data-sk="${esc(k)}" ${done[k]?"checked":""}> <span>${v.n}, ${v.q} ${v.u}</span></label>`).join("")}</div>`}).join("")+`<div class="row" style="margin-top:12px"><button class="btn small" id="shopReset">Скинути відмітки</button></div>`;
+}
+$("#menuDays").addEventListener("click",e=>{const b=e.target.closest("[data-md]");if(!b)return;st.menuDay=+b.dataset.md;renderMenu()});
+$("#menuShop").addEventListener("change",e=>{const k=e.target.dataset.sk;if(!k)return;const d=shopDone();d[k]=e.target.checked;store.set("shop",d);e.target.closest("label").classList.toggle("done",e.target.checked)});
+$("#menuShop").addEventListener("click",e=>{if(e.target.id==="shopReset"){store.set("shop",{});renderMenu()}});
 
 /* ---------- init ---------- */
 
