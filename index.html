@@ -381,10 +381,9 @@ const st={
   rec:store.get('rec',{who:0,op:'',c3:'',c4:''}),
   prog:store.get('prog',{phase:2,start:''})
 };
-if(!st.sessions){
-  const t=new Date(today);t.setDate(t.getDate()+1);
-  st.sessions=[{id:uid(),date:ymd(t),time:'08:00',title:'Ранковий заряд',minutes:14,done:[false,false],items:sample}];
-}
+if(!st.sessions)st.sessions=[];
+// remove the old demo session left from the first version
+st.sessions=st.sessions.filter(x=>!(x.title==='Ранковий заряд'&&!x.rec&&!x.src&&!x.done[0]&&!x.done[1]));
 const save=()=>{store.set('names',st.names);store.set('plan',st.plan);store.set('tpls',st.tpls);store.set('sessions',st.sessions);store.set('rec',st.rec);store.set('prog',st.prog)};
 
 /* ---------- header / names ---------- */
@@ -640,7 +639,7 @@ function renderDay(){
   $('#dayPanel').innerHTML=`<h2 style="font-size:17px">${d} ${MONTHS[m-1]}</h2>`+
   (ss.length?ss.map(s=>`<div class="sess" data-id="${s.id}"><div class="top"><div><b>${esc(s.title)}</b><div class="tip">${s.time?esc(s.time)+' · ':''}${s.minutes?s.minutes+' хв':'час не вказано'}${s.items?' · '+s.items.length+' вправ':''}</div></div><button class="icon-btn" data-del="${s.id}" aria-label="Видалити тренування">×</button></div>
   <div class="who">${s.rec?`<label class="${st.rec.who?'b':'a'}"><input type="checkbox" data-who="${st.rec.who}" ${s.done[st.rec.who]?'checked':''}>${s.items?'Виконано':'Пройдено'}</label>`:`<label class="a"><input type="checkbox" data-who="0" ${s.done[0]?'checked':''}>${nm(0)}</label><label class="b"><input type="checkbox" data-who="1" ${s.done[1]?'checked':''}>${nm(1)}</label>`}</div>
-  ${(s.items&&s.items.length)||s.steps?`<div class="row"><button class="btn small" data-run="${s.id}">Запустити</button></div>`:''}</div>`).join(''):'<p class="tip" style="margin:6px 0 0">На цей день нічого не заплановано.</p>')+
+  ${(s.items&&s.items.length)||s.steps?`<div class="row"><button class="btn small" data-run="${s.id}">Запустити</button></div>`:''}</div>`).join(''):'<p class="tip" style="margin:6px 0 0">На цей день нічого не заплановано. Програму на два тижні додає вкладка «Програма» кнопкою «Розписати в календар».</p>')+
   `<div class="addform"><label class="field full">Шаблон<select id="addTpl">${opts}</select></label>
   <label class="field">Назва<input id="addTitle" type="text" maxlength="40" placeholder="Назва"></label>
   <label class="field">Час<input id="addTime" type="time"></label>
