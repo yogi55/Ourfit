@@ -871,11 +871,16 @@ $('#recPhases').addEventListener('click',e=>{
 
 /* ---------- recovery: player ---------- */
 const RP={list:[],i:0,s:'ready',acc:0,last:0,paused:false,sess:null,single:false,name:'',ex:null,els:null,demo0:0,msg:'',raf:0,lastLabel:''};
-function figSVG(ex,px=''){
-  return `<svg viewBox="0 0 240 140" role="img" aria-label="Схема вправи: ${esc(ex.n)}"><line class="fl" x1="10" y1="123" x2="230" y2="123"/>${ex.props||''}
-  <polyline id="${px}fl2" class="body light" points=""/><polyline id="${px}fa2" class="body light" points=""/>
+function figInner(px){
+  return `<polyline id="${px}fl2" class="body light" points=""/><polyline id="${px}fa2" class="body light" points=""/>
   <ellipse id="${px}fhl" class="hl" cx="0" cy="0" rx="0" ry="0"/><circle id="${px}fball" class="ball" r="0" cx="0" cy="0"/>
-  <polyline id="${px}fl1" class="body" points=""/><path id="${px}ft" class="body"/><polyline id="${px}fa1" class="body"/><circle id="${px}fh" class="head" r="8"/></svg>`;
+  <polyline id="${px}fl1" class="body" points=""/><path id="${px}ft" class="body"/><polyline id="${px}fa1" class="body"/><polyline id="${px}fa1b" class="body light" points=""/><circle id="${px}fh" class="head" r="8"/>`;
+}
+function figSVG(ex,px=''){
+  return `<svg viewBox="0 0 240 140" role="img" aria-label="Схема вправи: ${esc(ex.n)}"><line class="fl" x1="10" y1="123" x2="230" y2="123"/>${ex.props||''}${figInner(px)}</svg>`;
+}
+function pairSVG(ex){
+  return `<svg viewBox="0 0 360 140" role="img" aria-label="Схема вправи для двох: ${esc(ex.n)}"><line class="fl" x1="10" y1="123" x2="350" y2="123"/>${ex.props||''}${figInner('q0')}${figInner('q1')}</svg>`;
 }
 const pts=(...a)=>a.map(p=>p[0].toFixed(1)+','+p[1].toFixed(1)).join(' ');
 function poseAt(ex,v){
@@ -1014,6 +1019,39 @@ Object.assign(RX,{
   steps:['Станьте або сядьте рівно, плечі опущені.','Повільно нахиліть вухо до плеча.','Змініть бік. Без ривків.'],tip:'Добре розслаблює шию після годування й носіння.',avoid:''}
 });
 
+
+/* ---------- pair exercises (two figures) ---------- */
+const mir=p=>{const r={};for(const k in p)r[k]=[360-p[k][0],p[k][1]];return r};
+const PL=(n,a,b,hl)=>({P:[a,b],hl});
+{
+ const sq0={h:[142,30],n:[142,42],p:[128,80],k:[132,102],a:[130,120],t:[142,120],e:[160,58],w:[178,70]};
+ const sq1={h:[132,52],n:[132,64],p:[110,98],k:[142,98],a:[130,120],t:[142,120],e:[154,76],w:[178,74]};
+ const bb0={h:[190,28],n:[186,40],p:[186,78],k:[196,100],a:[200,120],t:[212,120],e:[200,58],w:[210,72]};
+ const bb1={h:[190,48],n:[186,60],p:[188,96],k:[222,96],a:[212,120],t:[224,120],e:[206,78],w:[224,88]};
+ const tr0={h:[126,32],n:[134,44],p:[108,82],k:[116,102],a:[112,120],t:[124,120],e:[156,52],w:[178,58]};
+ const tr1={h:[148,32],n:[152,44],p:[130,82],k:[134,102],a:[130,120],t:[142,120],e:[164,60],w:[178,58]};
+ const pk0={h:[152,70],n:[140,76],p:[80,97],k:[50,107],a:[20,118],t:[12,120],e:[142,98],w:[142,118],e2:[142,98],w2:[142,118]};
+ const pk1=o(pk0,{e:[158,90],w:[178,84]});
+ const pp0={h:[150,28],n:[150,40],p:[142,78],k:[142,100],a:[140,120],t:[152,120],e:[164,58],w:[178,60]};
+ const pp1={h:[158,30],n:[158,42],p:[146,78],k:[146,100],a:[140,120],t:[152,120],e:[168,58],w:[179,60]};
+ const sb0={h:[192,56],n:[190,70],p:[188,108],k:[216,112],a:[240,117],t:[248,114],e:[204,88],w:[222,100]};
+ const sb1={h:[226,80],n:[212,88],p:[188,108],k:[216,112],a:[240,117],t:[248,114],e:[226,102],w:[240,108]};
+ Object.assign(RX,{
+ 'p-assist-squat':{n:'Присід за руки',pair:true,reps:10,cyc:[['Вдих: присідайте разом',3,0,1],['Видих: встаньте разом',2,1,0]],figs:[{P:[sq0,sq1],hl:{k:'glow',j:'p',m:'glow'}},{P:[mir(sq0),mir(sq1)]}],
+  steps:['Станьте обличчям одне до одного, візьміться за передпліччя.','Відхиліться назад і разом присідайте, спина рівна.','Допомагайте одне одному вставати.'],tip:'Тримайте рівний ритм і однакову глибину.',avoid:'Тиск у тазі чи біль у шві: зменшіть глибину.'},
+ 'p-wallsit':{n:'Стілець спина до спини',pair:true,reps:6,cyc:[['Видих: ковзайте вниз разом',3,0,1],['Утримуйте, дихайте',4,1,1],['Видих: піднімайтесь',3,1,0]],figs:[{P:[mir(bb0),mir(bb1)],hl:{k:'glow',j:'p',m:'glow'}},{P:[bb0,bb1]}],
+  steps:['Станьте спина до спини, обіпріться одне на одного.','Разом опускайтесь у присід, коліна близько 90°.','Утримуйте, тисніть спинами рівномірно.'],tip:'Опускайтеся лише так глибоко, як комфортно обом.',avoid:'Тиск у тазі або біль у колінах: підніміться.'},
+ 'p-towelrow':{n:'Тяга на двох',pair:true,reps:10,cyc:[['Відхиліться назад, руки прямі',2,0,0],['Видих: підтягніться одне до одного',2,0,1],['Вдих: повільно назад',3,1,0]],figs:[{P:[tr0,tr1],hl:{k:'glow',j:'n',m:'glow'}},{P:[mir(tr0),mir(tr1)]}],
+  steps:['Візьміться за рушник або передпліччя, відхиліться назад із прямою спиною.','На видиху підтягніться одне до одного, лопатки зведені.','На вдиху повільно відхиліться назад.'],tip:'Тягніть лопатками, а не руками.',avoid:''},
+ 'p-plank-tap':{n:'Планка з дотиком',pair:true,reps:8,cyc:[['Тап долонями вгорі',2,0,1],['Поверніть руки',2,1,0]],figs:[{P:[pk0,pk1],hl:{k:'glow',j:'p',m:'glow'}},{P:[mir(pk0),mir(pk1)]}],
+  steps:['Планка на прямих руках обличчям одне до одного.','Тап правою долонею об долоню партнера, не гойдаючи таз.','Наступний тап лівою. Чергуйте руки.'],tip:'Ноги ширше для стійкості, живіт підтягнутий.',avoid:'Лише на рівні «Активна». Випинання посередині живота: стоп.'},
+ 'p-palm-press':{n:'Жим долонями',pair:true,reps:8,cyc:[['Видих: тисніть долонями',2,0,1],['Утримуйте 3 с',3,1,1],['Вдих: розслабте',2,1,0]],figs:[{P:[pp0,pp1],hl:{k:'glow',j:'n',m:'glow'}},{P:[mir(pp0),mir(pp1)]}],
+  steps:['Станьте обличчям одне до одного, долоні в долоні на рівні грудей.','Тисніть однаково, тримайте 3 секунди.','Розслабте. Не затримуйте дихання.'],tip:'Рівне зусилля з обох боків.',avoid:''},
+ 'p-backstretch':{n:'Розтяжка спина до спини',pair:true,reps:5,cyc:[['Один нахиляється вперед, інший відхиляється назад',4,0,1],['Поміняйтеся',4,1,0]],figs:[{P:[mir(sb1),mir(sb0)]},{P:[sb0,sb1]}],
+  steps:['Сядьте спина до спини, ноги вперед.','Один повільно нахиляється вперед, другий відхиляється назад на його спину.','Поміняйтеся ролями. Дихайте повільно.'],tip:'Без ривків, тільки приємне розтягнення.',avoid:''}
+ });
+}
+
 /* ---------- duo program: generator ---------- */
 const SL={
  A:[{h:'u-squat',r:{1:'r-ballsqueeze',2:'r-ballsqueeze',3:'r-wallsit',4:'r-wallsit',5:'u-squat'}},
@@ -1027,7 +1065,9 @@ const SL={
     {h:'r-birddog',r:{1:'r-tilt',2:'r-tilt',3:'r-catcow',4:'r-birddog',5:'r-birddog'}},
     {h:'r-wallsit',r:{1:'r-ballsqueeze',2:'r-ballsqueeze',3:'r-wallsit',4:'r-wallsit',5:'r-wallsit'}}]
 };
-const WARM=['r-breath','u-armcircle','r-shoulder'],COOL=['u-neck','r-breath'];
+const WARM=['r-breath','u-armcircle','r-shoulder'];
+const coolIds=ph=>ph>=2?['p-backstretch','u-neck','r-breath']:['u-neck','r-breath'];
+const pairFor=(ph,key)=>ph<=1?[]:ph===2?['p-palm-press']:ph<=4?(key==='A'?['p-assist-squat','p-towelrow']:['p-wallsit','p-palm-press']):(key==='A'?['p-assist-squat','p-plank-tap','p-towelrow']:['p-wallsit','p-plank-tap','p-palm-press']);
 const WALKP={1:'r-walk5',2:'r-walk15',3:'r-walk20',4:'r-walk30',5:'r-walk30'};
 function recPhaseOn(t0){
   const R=st.rec;if(!R.op)return null;
@@ -1043,13 +1083,13 @@ function buildDuo(startStr){
   for(let i=0;i<14;i++){
     const d=addD(start,i),w=(d.getDay()+6)%7,ph=herPhase(d);
     let title,steps;
-    const sw=WARM.map(id=>({k:'warm',h:id,r:id})),sc=COOL.map(id=>({k:'cool',h:id,r:id}));
+    const sw=WARM.map(id=>({k:'warm',h:id,r:id})),sc=coolIds(ph).map(id=>({k:'cool',h:id,r:id}));
     if(w===0||w===2||w===4){
       const key=n%2===0?'A':'B';n++;
       title='Удвох · Сила '+key;
       const rounds=ph>=5?3:(ph>=3?2:1),main=[];
       for(let r=1;r<=rounds;r++)SL[key].forEach(sl=>main.push({k:'main',rd:r,rs:rounds,h:sl.h,r:sl.r[ph]}));
-      steps=[...sw,...main,...sc];
+      steps=[...sw,...main,...pairFor(ph,key).map(id=>({k:'pair',h:id,r:id})),...sc];
     }else if((w===3||w===6)&&st.prog.walks){
       title='Удвох · Прогулянка разом';
       steps=[{k:'warm',h:'r-breath',r:'r-breath'},{k:'walk',h:WALKP[ph],r:WALKP[ph]},...sc];
@@ -1087,7 +1127,7 @@ function renderProgram(){
     const row=s=>s.h===s.r?`<b>Разом</b><span>${esc(RX[s.h].n)}</span>`:`<b>${nm(0)}</b><span>${esc(RX[st.rec.who===0?s.r:s.h].n)}</span><b>${nm(1)}</b><span>${esc(RX[st.rec.who===1?s.r:s.h].n)}</span>`;
     const blk=(t,k)=>by(k).length?`<div class="tip" style="margin-top:8px;font-weight:700">${t}</div><div class="dline">${by(k).map(row).join('')}</div>`:'';
     return `<article class="card dcard"><div class="wk-head"><h3>${DAYN[d.getDay()]}, ${d.getDate()}.${pad(d.getMonth()+1)} · ${p.title.replace('Удвох · ','')}</h3><button class="btn small primary" data-pr="${p.date}">Запустити</button></div>
-    <div class="tip">${duoMins(p.steps)} хв · її фаза ${p.ph}</div>${blk('Розминка','warm')}${blk('Основна частина'+(rs>1?' (×'+rs+' кола)':''),'main')}${blk('Прогулянка','walk')}${blk('Заминка','cool')}</article>`}).join('');
+    <div class="tip">${duoMins(p.steps)} хв · її фаза ${p.ph}</div>${blk('Розминка','warm')}${blk('Основна частина'+(rs>1?' (×'+rs+' кола)':''),'main')}${blk('Парні вправи','pair')}${blk('Прогулянка','walk')}${blk('Заминка','cool')}</article>`}).join('');
 }
 $('#progSetup').addEventListener('change',e=>{
   if(e.target.id==='pStart'&&e.target.value)st.prog.start=e.target.value;
@@ -1110,7 +1150,7 @@ $('#progDays').addEventListener('click',e=>{
 
 /* ---------- duo player (split screen) ---------- */
 const DP={steps:[],i:0,s:'ready',acc:0,paused:false,last:0,raf:0,sess:null,name:'',demo0:0,ex:[null,null],els:[null,null],lbl:['',''],tot:0};
-const DK={warm:'Розминка',main:'Основна частина',cool:'Заминка',walk:'Прогулянка разом'};
+const DK={pair:'Парна вправа',warm:'Розминка',main:'Основна частина',cool:'Заминка',walk:'Прогулянка разом'};
 const dpEx=(s,i)=>RX[i===st.rec.who?s.r:s.h];
 const elsFor=px=>({l1:$('#'+px+'fl1'),l2:$('#'+px+'fl2'),t:$('#'+px+'ft'),a1:$('#'+px+'fa1'),a2:$('#'+px+'fa2'),h:$('#'+px+'fh'),hl:$('#'+px+'fhl'),ball:$('#'+px+'fball')});
 function openDp(steps,name,sess){
@@ -1127,6 +1167,13 @@ function loadDp(){
   $('#dpBar').style.width='0%';
   $('#dpKind').innerHTML=`<span class="tag ${tg?'together':'turns'}">${tg?'Разом':'Кожен своє'}</span> <b>${DK[sp.k]}${sp.rd&&sp.rs>1?' · коло '+sp.rd+' з '+sp.rs:''}</b>`;
   $('#dpPanes').style.display='';$('#dpInfo').style.display='';
+  if(DP.ex[0].pair){
+    const px=DP.ex[0];
+    $('#dpPanes').innerHTML=`<div class="dp-pane" style="grid-column:1/-1"><div class="dp-name"><span style="color:var(--a)">${nm(0)}</span> + <span style="color:var(--b)">${nm(1)}</span></div><h3>${esc(px.n)}</h3><div class="rp-fig">${pairSVG(px)}</div><div class="dp-cue" id="dpL0"></div><div class="tip" id="dpR0"></div></div>`;
+    DP.els=[elsFor('q0'),elsFor('q1')];
+    $('#dpInfo').innerHTML=`<div class="dp-info card" style="padding:10px;grid-column:1/-1"><ol class="steps">${px.steps.map(x=>`<li>${esc(x)}</li>`).join('')}</ol>${px.avoid?`<p class="avoid">${esc(px.avoid)}</p>`:''}</div>`;
+    dpCtl();return;
+  }
   $('#dpPanes').innerHTML=[0,1].map(i=>`<div class="dp-pane ${i?'b':'a'}"><div class="dp-name" style="color:var(--${i?'b':'a'})">${nm(i)}</div><h3>${esc(DP.ex[i].n)}</h3><div class="rp-fig">${figSVG(DP.ex[i],'p'+i)}</div><div class="dp-cue" id="dpL${i}"></div><div class="tip" id="dpR${i}"></div></div>`).join('');
   DP.els=[elsFor('p0'),elsFor('p1')];
   $('#dpInfo').innerHTML=[0,1].map(i=>`<div class="dp-info card" style="padding:10px"><b style="color:var(--${i?'b':'a'})">${nm(i)}</b><ol class="steps">${DP.ex[i].steps.map(s=>`<li>${esc(s)}</li>`).join('')}</ol>${DP.ex[i].avoid?`<p class="avoid">${esc(DP.ex[i].avoid)}</p>`:''}</div>`).join('');
@@ -1155,7 +1202,13 @@ function dframe(now){
       if(!DP.paused)DP.acc+=dt;el=DP.acc;
       if(DP.acc>=DP.tot){beep(988,.4);dpNext();DP.raf=requestAnimationFrame(dframe);return}
     }else el=(now-DP.demo0)/1000;
-    for(let i=0;i<2;i++){
+    if(DP.ex[0].pair){
+      const ex=DP.ex[0],tot=exTotal(ex),done=DP.s==='run'&&DP.acc>=tot;
+      const c=done?{l:'✓ Готово. Відпочиньте до сигналу',v:0}:cycleAt(ex,el);
+      paint(ex.figs[0],c.v,DP.els[0]);paint(ex.figs[1],c.v,DP.els[1]);
+      if(c.l!==DP.lbl[0]){DP.lbl[0]=c.l;$('#dpL0').textContent=c.l}
+      $('#dpR0').textContent=DP.s==='run'?(done?'':`повтор ${Math.min(ex.reps,Math.floor(DP.acc/cycLen(ex))+1)} з ${ex.reps}`):`${ex.reps} повторів`;
+    }else for(let i=0;i<2;i++){
       const ex=DP.ex[i],tot=exTotal(ex),done=DP.s==='run'&&DP.acc>=tot;
       const c=done?{l:'✓ Готово. Відпочиньте до сигналу',v:0}:cycleAt(ex,el);
       paint(ex,c.v,DP.els[i]);
