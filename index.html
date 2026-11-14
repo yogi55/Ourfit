@@ -382,6 +382,9 @@ const st={
   prog:store.get('prog',{phase:2,start:''})
 };
 if(!st.sessions)st.sessions=[];
+st.prog.walks=!!st.prog.walks;
+if(st.prog.manual===undefined)st.prog.manual=false;
+st.sessions=st.sessions.filter(x=>!(x.src==='duo'&&x.title==='Удвох · Прогулянка разом'&&!st.prog.walks));
 // remove the old demo session left from the first version
 st.sessions=st.sessions.filter(x=>!(x.title==='Ранковий заряд'&&!x.rec&&!x.src&&!x.done[0]&&!x.done[1]));
 const save=()=>{store.set('names',st.names);store.set('plan',st.plan);store.set('tpls',st.tpls);store.set('sessions',st.sessions);store.set('rec',st.rec);store.set('prog',st.prog)};
@@ -997,6 +1000,15 @@ Object.assign(RX,{
 'u-armcircle':{n:'Кола руками',reps:8,cyc:[['Рука вгору й назад колом',3,0,1],['Вниз і вперед',3,1,0]],
   P:[o(ST,{e:[112,22],w:[112,4]}),o(ST,{e:[96,58],w:[90,76]})],hl:{k:'glow',j:'n',m:'glow'},
   steps:['Станьте рівно, стопи на ширині плечей.','Робіть повільні кола прямими руками.','Через 4 кола змініть напрямок.'],tip:'Розкриває плечі й розігріває спину.',avoid:''},
+'u-pushup-knees':{n:'Віджимання з колін',reps:8,cyc:[['Вдих: опускайтесь',2,0,1],['Видих: віджимайтесь',2,1,0]],
+  P:[{h:[172,78],n:[160,82],p:[110,98],k:[84,108],a:[52,116],t:[44,119],e:[162,100],w:[162,118]},{h:[172,102],n:[160,106],p:[110,108],k:[84,112],a:[52,117],t:[44,119],e:[142,112],w:[162,118]}],hl:{k:'glow',j:'n',m:'glow'},
+  steps:['Упор на долоні й коліна, тіло пряма лінія від колін до голови.','Опускайте груди до підлоги, лікті під кутом близько 45°.','Видихаючи, віджимайтесь. Живіт підтягнутий.'],tip:'Хороший перехід до віджимань на носках.',avoid:'Випинання посередині живота чи тиск у тазі: зупиніться.'},
+'u-stepup':{n:'Підйом на підвищення',reps:10,props:'<path class="prop" d="M96 100 H140 V122 M96 100 V122"/>',cyc:[['Видих: підніміться на підвищення',2,0,1],['Вдих: повільно опустіться',3,1,0]],
+  P:[{h:[104,28],n:[104,40],p:[106,78],k:[122,86],a:[120,100],t:[132,100],k2:[100,100],a2:[100,120],t2:[112,120],e:[106,58],w:[108,76]},{h:[120,10],n:[120,22],p:[120,60],k:[122,82],a:[120,100],t:[132,100],k2:[128,76],a2:[118,92],t2:[128,92],e:[122,40],w:[124,58]}],hl:{k:'glow',j:'p',m:'glow'},
+  steps:['Підвищення: міцний стілець, сходинка чи низька лавка.','Поставте стопу на підвищення й підніміться силою цієї ноги.','Повільно опустіться. Змініть ногу після всіх повторів.'],tip:'Коліно дивиться над стопою, штовхайтеся п\'ятою.',avoid:''},
+'u-row':{n:'Тяга в нахилі',reps:10,cyc:[['Видих: тягніть лікоть до стегна',2,0,1],['Вдих: повільно опускайте',3,1,0]],
+  P:[{h:[160,52],n:[146,52],p:[96,78],k:[106,100],a:[110,120],t:[122,120],e:[148,76],w:[150,98]},{h:[160,52],n:[146,52],p:[96,78],k:[106,100],a:[110,120],t:[122,120],e:[130,64],w:[146,78]}],hl:{k:'glow',j:'n',m:'glow'},
+  steps:['У руці гантель, пляшка з водою або рюкзак. Таз назад, спина рівна.','Тягніть лікоть до стегна, зводьте лопатку.','Повільно опустіть руку. Змініть руку після всіх повторів.'],tip:'Рух йде від спини, а не від кисті.',avoid:''},
 'u-neck':{n:'Нахили голови',reps:5,cyc:[['Нахиліть голову вбік, дихайте рівно',4,0,1],['Тепер на другий бік',4,1,0]],
   P:[o(ST,{h:[103,30]}),o(ST,{h:[117,30]})],hl:{k:'glow',j:'n',m:'glow'},
   steps:['Станьте або сядьте рівно, плечі опущені.','Повільно нахиліть вухо до плеча.','Змініть бік. Без ривків.'],tip:'Добре розслаблює шию після годування й носіння.',avoid:''}
@@ -1004,17 +1016,19 @@ Object.assign(RX,{
 
 /* ---------- duo program: generator ---------- */
 const SL={
- A:[{h:'u-squat',r:{1:'r-ballsqueeze',2:'r-ballsqueeze',3:'r-wallsit',4:'r-wallsit'}},
-    {h:'u-pushup',r:{1:'r-tra',2:'r-tra',3:'r-wallpush',4:'r-wallpush'}},
-    {h:'r-bridge',r:{1:'r-kegel',2:'r-kegel',3:'r-bridge',4:'r-bridge'}},
-    {h:'u-plank',r:{1:'r-heelslide',2:'r-heelslide',3:'r-catcow',4:'r-plank'}}],
- B:[{h:'u-lunge',r:{1:'r-heelslide',2:'r-heelslide',3:'r-sit2stand',4:'r-sit2stand'}},
-    {h:'r-hinge',r:{1:'r-tra',2:'r-tra',3:'r-calf',4:'r-hinge'}},
-    {h:'r-birddog',r:{1:'r-tilt',2:'r-tilt',3:'r-catcow',4:'r-birddog'}},
-    {h:'r-wallsit',r:{1:'r-ballsqueeze',2:'r-ballsqueeze',3:'r-wallsit',4:'r-wallsit'}}]
+ A:[{h:'u-squat',r:{1:'r-ballsqueeze',2:'r-ballsqueeze',3:'r-wallsit',4:'r-wallsit',5:'u-squat'}},
+    {h:'u-pushup',r:{1:'r-tra',2:'r-tra',3:'r-wallpush',4:'r-wallpush',5:'u-pushup-knees'}},
+    {h:'r-bridge',r:{1:'r-kegel',2:'r-kegel',3:'r-bridge',4:'r-bridge',5:'r-bridge'}},
+    {h:'u-row',r:{1:'r-tilt',2:'r-tilt',3:'r-wallpush',4:'r-hinge',5:'u-row'}},
+    {h:'u-plank',r:{1:'r-heelslide',2:'r-heelslide',3:'r-catcow',4:'r-plank',5:'u-plank'}}],
+ B:[{h:'u-lunge',r:{1:'r-heelslide',2:'r-heelslide',3:'r-sit2stand',4:'r-sit2stand',5:'u-lunge'}},
+    {h:'r-hinge',r:{1:'r-tra',2:'r-tra',3:'r-calf',4:'r-hinge',5:'r-hinge'}},
+    {h:'u-stepup',r:{1:'r-ballsqueeze',2:'r-heelslide',3:'r-calf',4:'r-sit2stand',5:'u-stepup'}},
+    {h:'r-birddog',r:{1:'r-tilt',2:'r-tilt',3:'r-catcow',4:'r-birddog',5:'r-birddog'}},
+    {h:'r-wallsit',r:{1:'r-ballsqueeze',2:'r-ballsqueeze',3:'r-wallsit',4:'r-wallsit',5:'r-wallsit'}}]
 };
 const WARM=['r-breath','u-armcircle','r-shoulder'],COOL=['u-neck','r-breath'];
-const WALKP={1:'r-walk5',2:'r-walk15',3:'r-walk20',4:'r-walk30'};
+const WALKP={1:'r-walk5',2:'r-walk15',3:'r-walk20',4:'r-walk30',5:'r-walk30'};
 function recPhaseOn(t0){
   const R=st.rec;if(!R.op)return null;
   const days=Math.floor((t0-pd(R.op))/864e5);if(days<0)return 1;
@@ -1023,7 +1037,7 @@ function recPhaseOn(t0){
   if(!R.c4||t0<pd(R.c4))return 3;
   return 4;
 }
-const herPhase=d=>recPhaseOn(d)||st.prog.phase;
+const herPhase=d=>(st.prog.manual||!st.rec.op)?st.prog.phase:(recPhaseOn(d)||2);
 function buildDuo(startStr){
   const start=pd(startStr),out=[];let n=0;
   for(let i=0;i<14;i++){
@@ -1033,8 +1047,10 @@ function buildDuo(startStr){
     if(w===0||w===2||w===4){
       const key=n%2===0?'A':'B';n++;
       title='Удвох · Сила '+key;
-      steps=[...sw,...SL[key].map(sl=>({k:'main',h:sl.h,r:sl.r[ph]})),...sc];
-    }else if(w===3||w===6){
+      const rounds=ph>=5?3:(ph>=3?2:1),main=[];
+      for(let r=1;r<=rounds;r++)SL[key].forEach(sl=>main.push({k:'main',rd:r,rs:rounds,h:sl.h,r:sl.r[ph]}));
+      steps=[...sw,...main,...sc];
+    }else if((w===3||w===6)&&st.prog.walks){
       title='Удвох · Прогулянка разом';
       steps=[{k:'warm',h:'r-breath',r:'r-breath'},{k:'walk',h:WALKP[ph],r:WALKP[ph]},...sc];
     }else continue;
@@ -1059,21 +1075,24 @@ function renderProgram(){
   if(!P.start)P.start=tomorrowStr();
   $('#progSetup').innerHTML=`<div class="setup-grid">
     <label class="field">Початок<input id="pStart" type="date" value="${P.start}"></label>
-    <label class="field">Її фаза відновлення${auto?'':''}<select id="pPhase" ${auto?'disabled':''}>${[1,2,3,4].map(i=>`<option value="${i}" ${(auto?recPhaseOn(new Date(today.getFullYear(),today.getMonth(),today.getDate())):P.phase)==i?'selected':''}>Фаза ${i}</option>`).join('')}</select></label>
-    <div class="tip full">${auto?'Фаза рахується з дати операції та дат дозволу лікаря у вкладці «Відновлення». Без дат дозволу вона не вища за 2.':'Дату операції у вкладці «Відновлення» ще не вказано. Оберіть фазу вручну: 1 це перші 2 тижні, 2 це тижні 2–6 до огляду, 3 і 4 лише після дозволу лікаря.'}</div>
+    <label class="field">Її рівень<select id="pPhase">${st.rec.op?`<option value="auto" ${!P.manual?'selected':''}>Авто (за вкладкою «Відновлення»)</option>`:''}${[[1,'Фаза 1'],[2,'Фаза 2'],[3,'Фаза 3'],[4,'Фаза 4'],[5,'Активна: повні навантаження']].map(([i,t])=>`<option value="${i}" ${(P.manual||!st.rec.op)&&P.phase==i?'selected':''}>${t}</option>`).join('')}</select></label>
+    <label class="field full" style="flex-direction:row;align-items:center;gap:8px"><input id="pWalk" type="checkbox" ${P.walks?'checked':''} style="width:20px;height:20px"> Додати дні прогулянок разом</label>
+    <div class="tip full">Фази 1–4 це поступове відновлення після операції. «Активна» означає, що лікар уже дозволив повні навантаження: вправи стають такими самими, як у вас, лише без стрибків і бігу, поки не оцінено тазове дно.</div>
     <button class="btn primary full" id="pGen">Розписати в календар</button></div><div class="status" id="pStatus" hidden></div>`;
   const plan=buildDuo(P.start);
   $('#progDays').innerHTML=plan.map(p=>{
     const d=pd(p.date);
-    const by=k=>p.steps.filter(s=>s.k===k);
+    const by=k=>p.steps.filter(s=>s.k===k&&(!s.rd||s.rd===1));
+    const rs=(p.steps.find(s=>s.rs)||{}).rs||1;
     const row=s=>s.h===s.r?`<b>Разом</b><span>${esc(RX[s.h].n)}</span>`:`<b>${nm(0)}</b><span>${esc(RX[st.rec.who===0?s.r:s.h].n)}</span><b>${nm(1)}</b><span>${esc(RX[st.rec.who===1?s.r:s.h].n)}</span>`;
     const blk=(t,k)=>by(k).length?`<div class="tip" style="margin-top:8px;font-weight:700">${t}</div><div class="dline">${by(k).map(row).join('')}</div>`:'';
     return `<article class="card dcard"><div class="wk-head"><h3>${DAYN[d.getDay()]}, ${d.getDate()}.${pad(d.getMonth()+1)} · ${p.title.replace('Удвох · ','')}</h3><button class="btn small primary" data-pr="${p.date}">Запустити</button></div>
-    <div class="tip">${duoMins(p.steps)} хв · її фаза ${p.ph}</div>${blk('Розминка','warm')}${blk('Основна частина','main')}${blk('Прогулянка','walk')}${blk('Заминка','cool')}</article>`}).join('');
+    <div class="tip">${duoMins(p.steps)} хв · її фаза ${p.ph}</div>${blk('Розминка','warm')}${blk('Основна частина'+(rs>1?' (×'+rs+' кола)':''),'main')}${blk('Прогулянка','walk')}${blk('Заминка','cool')}</article>`}).join('');
 }
 $('#progSetup').addEventListener('change',e=>{
   if(e.target.id==='pStart'&&e.target.value)st.prog.start=e.target.value;
-  if(e.target.id==='pPhase')st.prog.phase=+e.target.value;
+  if(e.target.id==='pPhase'){if(e.target.value==='auto')st.prog.manual=false;else{st.prog.manual=true;st.prog.phase=+e.target.value}}
+  if(e.target.id==='pWalk')st.prog.walks=e.target.checked;
   save();renderProgram();
 });
 $('#progSetup').addEventListener('click',e=>{
@@ -1106,7 +1125,7 @@ function loadDp(){
   const tg=sp.h===sp.r;
   $('#dpProg').textContent=`Крок ${DP.i+1} з ${DP.steps.length}`;
   $('#dpBar').style.width='0%';
-  $('#dpKind').innerHTML=`<span class="tag ${tg?'together':'turns'}">${tg?'Разом':'Кожен своє'}</span> <b>${DK[sp.k]}</b>`;
+  $('#dpKind').innerHTML=`<span class="tag ${tg?'together':'turns'}">${tg?'Разом':'Кожен своє'}</span> <b>${DK[sp.k]}${sp.rd&&sp.rs>1?' · коло '+sp.rd+' з '+sp.rs:''}</b>`;
   $('#dpPanes').style.display='';$('#dpInfo').style.display='';
   $('#dpPanes').innerHTML=[0,1].map(i=>`<div class="dp-pane ${i?'b':'a'}"><div class="dp-name" style="color:var(--${i?'b':'a'})">${nm(i)}</div><h3>${esc(DP.ex[i].n)}</h3><div class="rp-fig">${figSVG(DP.ex[i],'p'+i)}</div><div class="dp-cue" id="dpL${i}"></div><div class="tip" id="dpR${i}"></div></div>`).join('');
   DP.els=[elsFor('p0'),elsFor('p1')];
