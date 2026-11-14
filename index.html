@@ -1055,7 +1055,7 @@ const PL=(n,a,b,hl)=>({P:[a,b],hl});
 /* ---------- duo program: generator ---------- */
 const SL={
  A:[{h:'u-squat',r:{1:'r-ballsqueeze',2:'r-ballsqueeze',3:'r-wallsit',4:'r-wallsit',5:'u-squat'}},
-    {h:'u-pushup',r:{1:'r-tra',2:'r-tra',3:'r-wallpush',4:'r-wallpush',5:'u-pushup-knees'}},
+    {h:'u-pushup',r:{1:'r-tra',2:'r-tra',3:'r-wallpush',4:'r-wallpush',5:'u-pushup'}},
     {h:'r-bridge',r:{1:'r-kegel',2:'r-kegel',3:'r-bridge',4:'r-bridge',5:'r-bridge'}},
     {h:'u-row',r:{1:'r-tilt',2:'r-tilt',3:'r-wallpush',4:'r-hinge',5:'u-row'}},
     {h:'u-plank',r:{1:'r-heelslide',2:'r-heelslide',3:'r-catcow',4:'r-plank',5:'u-plank'}}],
@@ -1117,7 +1117,7 @@ function renderProgram(){
     <label class="field">Початок<input id="pStart" type="date" value="${P.start}"></label>
     <label class="field">Її рівень<select id="pPhase">${st.rec.op?`<option value="auto" ${!P.manual?'selected':''}>Авто (за вкладкою «Відновлення»)</option>`:''}${[[1,'Фаза 1'],[2,'Фаза 2'],[3,'Фаза 3'],[4,'Фаза 4'],[5,'Активна: повні навантаження']].map(([i,t])=>`<option value="${i}" ${(P.manual||!st.rec.op)&&P.phase==i?'selected':''}>${t}</option>`).join('')}</select></label>
     <label class="field full" style="flex-direction:row;align-items:center;gap:8px"><input id="pWalk" type="checkbox" ${P.walks?'checked':''} style="width:20px;height:20px"> Додати дні прогулянок разом</label>
-    <div class="tip full">Фази 1–4 це поступове відновлення після операції. «Активна» означає, що лікар уже дозволив повні навантаження: вправи стають такими самими, як у вас, лише без стрибків і бігу, поки не оцінено тазове дно.</div>
+    <div class="tip full">Фази 1–4 це поступове відновлення після операції. «Активна» означає, що лікар уже дозволив повні навантаження: вправи в неї такі самі, як у вас, лише без стрибків і бігу, поки не оцінено тазове дно.</div>
     <button class="btn primary full" id="pGen">Розписати в календар</button></div><div class="status" id="pStatus" hidden></div>`;
   const plan=buildDuo(P.start);
   $('#progDays').innerHTML=plan.map(p=>{
