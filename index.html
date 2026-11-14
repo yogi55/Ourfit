@@ -1,0 +1,946 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Удвох</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700&family=Unbounded:wght@500;700&display=swap" rel="stylesheet">
+<style>
+/* Layout idea: one narrow column app, tabs on top, two partner colors (A pine, B ember) carry through every screen. */
+:root{
+  --bg:#EEF1EC; --surface:#FFFFFF; --ink:#14211C; --muted:#5C6B64; --line:#D5DCD5;
+  --a:#1F6F5C; --a-soft:#D9EBE4; --b:#D9532B; --b-soft:#F8E0D7; --ok:#2E7D32;
+  --display:'Unbounded','Onest',system-ui,sans-serif; --body:'Onest',system-ui,-apple-system,'Segoe UI',sans-serif;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0F1613; --surface:#18221E; --ink:#E8EFEA; --muted:#93A39A; --line:#2A3832;
+    --a:#4DB89C; --a-soft:#1B3A32; --b:#FF8359; --b-soft:#432820; --ok:#6FCF76; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0F1613; --surface:#18221E; --ink:#E8EFEA; --muted:#93A39A; --line:#2A3832;
+  --a:#4DB89C; --a-soft:#1B3A32; --b:#FF8359; --b-soft:#432820; --ok:#6FCF76; color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.5;-webkit-text-size-adjust:100%}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:3px solid var(--a);outline-offset:2px;border-radius:6px}
+.wrap{max-width:760px;margin:0 auto;padding:20px 16px 48px}
+header{display:flex;flex-direction:column;gap:14px;margin-bottom:18px}
+h1{font-family:var(--display);font-weight:700;font-size:28px;letter-spacing:-.02em;margin:0;display:flex;align-items:center;gap:10px}
+h1 .pair{display:inline-flex}
+h1 .pair i{width:18px;height:18px;border-radius:50%;display:block}
+h1 .pair i:first-child{background:var(--a)}
+h1 .pair i:last-child{background:var(--b);margin-left:-6px;mix-blend-mode:multiply}
+.names{display:flex;gap:10px;flex-wrap:wrap}
+.name{display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:4px 14px 4px 6px}
+.name .dot{width:22px;height:22px;border-radius:50%;flex:none}
+.name input{border:0;background:transparent;width:130px;padding:4px 2px;font-weight:600}
+.name input:focus-visible{outline-offset:1px}
+nav{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:4px;margin-bottom:20px;position:sticky;top:8px;z-index:5}
+nav button{border:0;background:transparent;padding:10px 6px;border-radius:10px;font-weight:600;color:var(--muted);display:flex;align-items:center;justify-content:center;gap:6px}
+nav button[aria-selected="true"]{background:var(--ink);color:var(--bg)}
+nav .count{background:var(--b);color:#fff;border-radius:999px;font-size:12px;min-width:20px;padding:0 6px;line-height:20px;font-variant-numeric:tabular-nums}
+h2{font-family:var(--display);font-weight:500;font-size:19px;margin:0 0 4px;text-wrap:balance}
+.lead{color:var(--muted);margin:0 0 16px}
+.filters{display:flex;flex-direction:column;gap:10px;margin-bottom:16px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:6px 12px;font-size:14px;font-weight:500}
+.chip[aria-pressed="true"]{background:var(--a);border-color:var(--a);color:#fff}
+.search{width:100%;padding:10px 14px;border:1px solid var(--line);background:var(--surface);border-radius:12px}
+.list{display:flex;flex-direction:column;gap:10px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px 16px}
+.ex{display:flex;flex-direction:column;gap:8px}
+.ex-top{display:flex;gap:12px;align-items:flex-start;justify-content:space-between}
+.ex h3{margin:0;font-size:17px;font-weight:700;text-wrap:balance}
+.meta{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.tag{font-size:12px;font-weight:600;border-radius:6px;padding:2px 8px;background:var(--bg);color:var(--muted)}
+.tag.together{background:var(--a-soft);color:var(--a)}
+.tag.turns{background:var(--b-soft);color:var(--b)}
+.lvl{letter-spacing:2px;color:var(--ink)}
+.btn{border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:8px 14px;font-weight:600}
+.btn.primary{background:var(--a);border-color:var(--a);color:#fff}
+.btn.accent{background:var(--b);border-color:var(--b);color:#fff}
+.btn.big{padding:14px 22px;font-size:17px;border-radius:14px}
+.btn.small{padding:5px 10px;font-size:13px}
+.btn[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:var(--bg)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+details summary{cursor:pointer;color:var(--muted);font-size:14px;font-weight:500}
+details p{margin:8px 0 0}
+.tip{color:var(--muted);font-size:14px}
+.empty{color:var(--muted);text-align:center;padding:24px}
+/* builder */
+.settings{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px}
+.field{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--muted);font-weight:600}
+.field input,.field select{padding:9px 10px;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--ink);font-weight:600;font-size:16px;font-variant-numeric:tabular-nums;width:100%}
+.plan-item{display:flex;align-items:center;gap:10px;padding:10px 12px}
+.plan-item .n{font-family:var(--display);font-size:13px;width:24px;color:var(--muted);font-variant-numeric:tabular-nums}
+.plan-item .t{flex:1;min-width:0;font-weight:600}
+.plan-item .t small{display:block;color:var(--muted);font-weight:500}
+.icon-btn{border:1px solid var(--line);background:var(--surface);width:34px;height:34px;border-radius:8px;font-size:15px;line-height:1;padding:0}
+.summary{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin:16px 0}
+.summary .total{font-family:var(--display);font-size:22px;font-variant-numeric:tabular-nums}
+.summary .total small{font-family:var(--body);font-size:14px;color:var(--muted);display:block}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.saved{margin-top:22px}
+.saved h3{font-size:15px;margin:0 0 8px}
+/* calendar */
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px}
+.stat b{font-family:var(--display);font-size:24px;display:block;font-variant-numeric:tabular-nums}
+.stat span{color:var(--muted);font-size:13px}
+.cal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.cal-head h3{margin:0;font-family:var(--display);font-weight:500;font-size:17px;text-transform:capitalize}
+.grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.dow{font-size:12px;color:var(--muted);text-align:center;font-weight:600;padding:4px 0}
+.day{aspect-ratio:1/1;border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:4px;display:flex;flex-direction:column;align-items:center;justify-content:space-between;font-variant-numeric:tabular-nums;font-weight:600;font-size:14px}
+.day.out{opacity:.35}
+.day.today{border-color:var(--ink);border-width:2px}
+.day[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+.dots{display:flex;gap:3px;min-height:10px}
+.dots i{width:8px;height:8px;border-radius:50%;display:block;border:2px solid var(--muted)}
+.dots i.done{background:var(--ok);border-color:var(--ok)}
+.dpanel{margin-top:14px}
+.sess{display:flex;flex-direction:column;gap:8px;padding:12px;border:1px solid var(--line);border-radius:12px;margin-top:8px}
+.sess .top{display:flex;justify-content:space-between;gap:8px;align-items:flex-start}
+.sess b{font-weight:700}
+.who{display:flex;gap:8px;flex-wrap:wrap}
+.who label{display:flex;align-items:center;gap:6px;padding:6px 12px;border-radius:999px;font-weight:600;font-size:14px;cursor:pointer}
+.who label.a{background:var(--a-soft);color:var(--a)}
+.who label.b{background:var(--b-soft);color:var(--b)}
+.who input{width:18px;height:18px;accent-color:currentColor}
+.addform{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+.addform .full{grid-column:1/-1}
+/* timer */
+.timer{position:fixed;inset:0;z-index:50;background:var(--bg);display:none;flex-direction:column;align-items:center;justify-content:space-between;padding:20px 16px 28px;text-align:center;overflow-y:auto}
+.timer.open{display:flex}
+.timer[data-type="work"]{background:var(--a-soft)}
+.timer[data-type="rest"]{background:var(--b-soft)}
+.timer-top{width:100%;max-width:560px;display:flex;justify-content:space-between;align-items:center;font-weight:600}
+.phase{font-family:var(--display);font-size:15px;letter-spacing:.06em;text-transform:uppercase}
+.ring{position:relative;width:min(70vw,280px);aspect-ratio:1/1;margin:8px auto}
+.ring svg{width:100%;height:100%;transform:rotate(-90deg)}
+.ring circle{fill:none;stroke-width:10}
+.ring .bg{stroke:var(--line)}
+.ring .fg{stroke:var(--a);stroke-linecap:round;transition:stroke-dashoffset .25s linear}
+.timer[data-type="rest"] .ring .fg{stroke:var(--b)}
+.ring .num{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:var(--display);font-size:64px;font-variant-numeric:tabular-nums}
+.cur{max-width:560px}
+.cur h2{font-size:24px}
+.cur p{margin:6px 0 0}
+.next{color:var(--muted);font-size:15px}
+.controls{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.done-box{max-width:420px}
+/* recovery */
+.warn{background:var(--b-soft);border:1px solid var(--b);border-radius:14px;padding:12px 14px;margin-bottom:14px;font-size:15px}
+.warn summary{color:var(--ink);font-weight:700;font-size:15px}
+.warn ul{margin:8px 0 0;padding-left:20px}
+.warn li{margin:4px 0}
+.setup-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.setup-grid .full{grid-column:1/-1}
+.status{margin-top:12px;padding:10px 12px;border-radius:10px;background:var(--a-soft);color:var(--ink);font-size:15px}
+.rph{margin-top:14px}
+.rph.locked{opacity:.75}
+.rph h3{margin:0;font-family:var(--display);font-weight:500;font-size:16px}
+.rph .sub{color:var(--muted);margin:2px 0 8px}
+.gate{font-size:14px;padding:8px 10px;border-radius:8px;background:var(--bg);margin:8px 0}
+.badge{display:inline-block;font-size:12px;font-weight:700;padding:2px 8px;border-radius:999px;background:var(--a);color:#fff;margin-left:6px;vertical-align:middle;font-family:var(--body)}
+.wk{border-top:1px solid var(--line);padding-top:10px;margin-top:10px}
+.wk-head{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.wk-head b{font-size:15px}
+.xl{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.xl button{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:5px 10px;font-size:13px;font-weight:500}
+.rp{position:fixed;inset:0;z-index:60;background:var(--bg);display:none;overflow-y:auto}
+.rp.open{display:block}
+.rp-in{max-width:560px;margin:0 auto;padding:14px 16px 36px;display:flex;flex-direction:column;gap:12px}
+.rp-top{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.rp-bar{height:6px;border-radius:3px;background:var(--line);overflow:hidden}
+.rp-bar i{display:block;height:100%;width:0;background:var(--a)}
+.rp-fig{padding:8px}
+.rp-fig svg{width:100%;height:auto;max-height:260px;display:block}
+.rp-fig .body{fill:none;stroke:var(--ink);stroke-width:6;stroke-linecap:round;stroke-linejoin:round}
+.rp-fig .light{opacity:.4}
+.rp-fig .fl{stroke:var(--muted);stroke-width:2}
+.rp-fig .prop{fill:none;stroke:var(--muted);stroke-width:4;stroke-linecap:round;stroke-linejoin:round}
+.rp-fig .head{fill:var(--bg);stroke:var(--ink);stroke-width:5}
+.rp-fig .hl{fill:var(--a);opacity:.45}
+.rp-fig .ball{fill:var(--b)}
+.rp-live{text-align:center}
+.rp-label{font-family:var(--display);font-weight:500;font-size:18px;min-height:52px;display:flex;align-items:center;justify-content:center;text-wrap:balance}
+.rp-clock{display:flex;flex-direction:column;align-items:center;font-variant-numeric:tabular-nums}
+.rp-clock span:first-child{font-family:var(--display);font-size:44px;line-height:1.2}
+.rp .controls .btn.big{min-width:140px}
+.steps{margin:0;padding-left:20px}
+.steps li{margin:4px 0}
+.avoid{margin:8px 0 0;font-size:14px;color:var(--b);font-weight:500}
+@media (max-width:480px){nav{grid-template-columns:1fr 1fr}}
+@media (max-width:420px){.settings{grid-template-columns:1fr 1fr}.settings .field:last-child{grid-column:1/-1}.day{font-size:13px;padding:3px}}
+@media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1><span class="pair" aria-hidden="true"><i></i><i></i></span>Удвох</h1>
+    <div class="names">
+      <label class="name"><span class="dot" style="background:var(--a)"></span><input id="nameA" aria-label="Ім'я першого партнера" maxlength="20"></label>
+      <label class="name"><span class="dot" style="background:var(--b)"></span><input id="nameB" aria-label="Ім'я другого партнера" maxlength="20"></label>
+    </div>
+  </header>
+
+  <nav role="tablist" aria-label="Розділи">
+    <button role="tab" id="tab-exercises" data-view="exercises">Вправи</button>
+    <button role="tab" id="tab-builder" data-view="builder">Тренування <span class="count" id="planCount">0</span></button>
+    <button role="tab" id="tab-recovery" data-view="recovery">Відновлення</button>
+    <button role="tab" id="tab-calendar" data-view="calendar">Календар</button>
+  </nav>
+
+  <main>
+    <section id="view-exercises" role="tabpanel" aria-labelledby="tab-exercises">
+      <h2>Вправи для двох</h2>
+      <p class="lead">Обирайте вправи й додавайте їх у тренування.</p>
+      <div class="filters">
+        <input class="search" id="q" type="search" placeholder="Пошук вправи" aria-label="Пошук вправи">
+        <div class="chips" id="fGroup" aria-label="Група м'язів"></div>
+        <div class="chips" id="fOther" aria-label="Рівень та інвентар"></div>
+      </div>
+      <div class="list" id="exList"></div>
+    </section>
+
+    <section id="view-builder" role="tabpanel" aria-labelledby="tab-builder" hidden>
+      <h2>Конструктор тренування</h2>
+      <p class="lead">Налаштуйте раунди, порядок вправ і запускайте таймер на двох.</p>
+      <div class="settings">
+        <label class="field">Робота, с<input id="work" type="number" min="10" max="180" step="5"></label>
+        <label class="field">Відпочинок, с<input id="rest" type="number" min="0" max="120" step="5"></label>
+        <label class="field">Кіл<input id="rounds" type="number" min="1" max="10"></label>
+      </div>
+      <div class="list" id="planList"></div>
+      <div class="summary">
+        <div class="total" id="total">0 хв<small id="totalSub"></small></div>
+        <div class="row">
+          <button class="btn" id="clearPlan">Очистити</button>
+          <button class="btn primary big" id="startBtn">Старт</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="row" style="gap:10px">
+          <label class="field" style="flex:1;min-width:150px">Назва<input id="planName" type="text" maxlength="40" placeholder="Наприклад, Ранковий заряд"></label>
+          <label class="field">Дата<input id="planDate" type="date"></label>
+        </div>
+        <div class="row" style="margin-top:10px">
+          <button class="btn" id="saveTpl">Зберегти шаблон</button>
+          <button class="btn" id="schedBtn">Запланувати на дату</button>
+        </div>
+      </div>
+      <div class="saved" id="savedBox"></div>
+    </section>
+
+    <section id="view-recovery" role="tabpanel" aria-labelledby="tab-recovery" hidden>
+      <h2>Відновлення після кесаревого</h2>
+      <p class="lead">Поетапний план від дихання й прогулянок до силових вправ. Наступна фаза відкривається лише після огляду лікаря.</p>
+      <div class="warn" id="recWarn"></div>
+      <div class="card" id="recSetup"></div>
+      <div id="recPhases"></div>
+    </section>
+
+    <section id="view-calendar" role="tabpanel" aria-labelledby="tab-calendar" hidden>
+      <h2>Календар і прогрес</h2>
+      <p class="lead">Плануйте тренування й відмічайте, хто з вас його зробив.</p>
+      <div class="stats" id="stats"></div>
+      <div class="cal-head">
+        <button class="btn small" id="prevM" aria-label="Попередній місяць">←</button>
+        <h3 id="monthTitle"></h3>
+        <button class="btn small" id="nextM" aria-label="Наступний місяць">→</button>
+      </div>
+      <div class="grid" id="calGrid"></div>
+      <div class="card dpanel" id="dayPanel"></div>
+    </section>
+  </main>
+</div>
+
+<div class="rp" id="rp" role="dialog" aria-modal="true" aria-label="Вправи відновлення">
+  <div class="rp-in">
+    <div class="rp-top"><div><div class="tip" id="rpProg"></div><b id="rpSess"></b></div><button class="btn small" id="rpClose">Закрити</button></div>
+    <div class="rp-bar"><i id="rpBar"></i></div>
+    <div class="card rp-fig" id="rpFig"></div>
+    <div class="rp-live"><div class="rp-label" id="rpLabel" aria-live="polite"></div><div class="rp-clock"><span id="rpTime"></span><span class="tip" id="rpReps"></span></div></div>
+    <div class="controls" id="rpCtl"></div>
+    <div class="card" id="rpInfo"></div>
+    <p class="tip">Біль у шві, тиск у тазі, підтікання або випинання живота: зупиніться й повідомте лікаря.</p>
+  </div>
+</div>
+
+<div class="timer" id="timer" role="dialog" aria-modal="true" aria-label="Таймер тренування">
+  <div class="timer-top"><span id="tProgress"></span><button class="btn small" id="tClose">Завершити</button></div>
+  <div>
+    <div class="phase" id="tPhase"></div>
+    <div class="ring"><svg viewBox="0 0 120 120"><circle class="bg" cx="60" cy="60" r="54"/><circle class="fg" id="tFg" cx="60" cy="60" r="54" stroke-dasharray="339.29" stroke-dashoffset="0"/></svg><div class="num" id="tNum">0</div></div>
+  </div>
+  <div class="cur" id="tCur"></div>
+  <div class="controls" id="tCtl">
+    <button class="btn big" id="tPrev">←</button>
+    <button class="btn primary big" id="tPause">Пауза</button>
+    <button class="btn big" id="tSkip">→</button>
+  </div>
+</div>
+
+<script>
+(function(){
+'use strict';
+const EX=[
+{id:'wallsit',n:'Стілець спина до спини',g:'Ноги',l:2,eq:'немає',mode:'together',s:40,d:'Станьте спина до спини, обіпріться одне на одного й разом опустіться в присід, коліна під 90°. Утримуйте позу.',t:'Тисніть спинами рівномірно, інакше хтось з\'їде вниз.'},
+{id:'assist-squat',n:'Присід за руки',g:'Ноги',l:1,eq:'немає',mode:'together',s:40,d:'Візьміться за передпліччя, відхиліться назад і присідайте разом. Допомагайте одне одному вставати.',t:'Спина пряма, п\'яти притиснуті до підлоги.'},
+{id:'mirror-lunge',n:'Дзеркальні випади',g:'Ноги',l:1,eq:'немає',mode:'together',s:40,d:'Станьте обличчям одне до одного й робіть випади різними ногами синхронно. На кожному повторі торкайтеся долонь.',t:'Коліно не виходить за носок.'},
+{id:'bridge-press',n:'Місток з опором',g:'Ноги',l:2,eq:'немає',mode:'turns',s:40,d:'Один лягає й піднімає таз у місток. Інший кладе долоні на коліна й легенько тисне вниз. Після підходу міняйтеся.',t:'Тиск має бути помірним, щоб рух залишався плавним.'},
+{id:'jump-five',n:'Стрибок із п\'ятюнею',g:'Кардіо',l:2,eq:'немає',mode:'together',s:30,d:'Присід, потім стрибок угору. У верхній точці плесніть долонями з партнером.',t:'Приземляйтесь м\'яко, на напівзігнуті ноги.'},
+{id:'burpee-sync',n:'Синхронне бурпі',g:'Кардіо',l:3,eq:'немає',mode:'together',s:30,d:'Робіть бурпі в унісон, дивлячись одне на одного. На стрибку плескайте долонями.',t:'Знайдіть спільний ритм, швидкість вторинна.'},
+{id:'ball-run',n:'Біг із передачею м\'яча',g:'Кардіо',l:1,eq:'м\'яч',mode:'together',s:40,d:'Біжіть на місці обличчям одне до одного й передавайте м\'яч зліва направо, потім навпаки.',t:'Підійде й подушка чи згорнутий рушник.'},
+{id:'pushup-five',n:'Віджимання з п\'ятюнею',g:'Верх',l:2,eq:'немає',mode:'together',s:40,d:'Планка обличчям одне до одного. Віджимання, у верхній точці п\'ятюня правою, потім лівою.',t:'Полегшення: віджимання з колін.'},
+{id:'towel-row',n:'Тяга на двох',g:'Верх',l:1,eq:'рушник',mode:'turns',s:40,d:'Тримайтеся за кінці рушника, відхиліться назад із прямою спиною. По черзі підтягуйтеся одне до одного.',t:'Тягніть лопатками, а не руками.'},
+{id:'palm-press',n:'Жим долонями',g:'Верх',l:1,eq:'немає',mode:'together',s:30,d:'Стоячи, долоні в долоні на рівні грудей. Тисніть однаково, тримайте 3 секунди й розслабтесь.',t:'Не затримуйте дихання.'},
+{id:'towel-tug',n:'Перетягування рушника',g:'Верх',l:1,eq:'рушник',mode:'together',s:30,d:'Тримайте рушник, тягніть у протилежні боки з рівним зусиллям. Рух мінімальний, працює утримання.',t:'Корпус напружений, ноги широко.'},
+{id:'wheelbarrow',n:'Тачка',g:'Верх',l:2,eq:'немає',mode:'turns',s:40,d:'Один стоїть у планці на руках, інший тримає за щиколотки. Пройдіть 10 кроків на руках і міняйтеся.',t:'Тримайте тіло прямою лінією, не прогинайте поперек.'},
+{id:'plank-tap',n:'Планка з дотиком',g:'Кор',l:2,eq:'немає',mode:'together',s:40,d:'Планка обличчям одне до одного. По черзі торкайтеся долонею долоні партнера, не гойдаючи таз.',t:'Широко поставте ноги для стійкості.'},
+{id:'sit-pass',n:'Прес із передачею м\'яча',g:'Кор',l:2,eq:'м\'яч',mode:'together',s:40,d:'Сядьте обличчям одне до одного, коліна зігнуті. Лягайте назад і піднімайтеся, передаючи м\'яч над головою.',t:'Піднімайтеся за рахунок преса, не ривком.'},
+{id:'leg-throw',n:'Скидання ніг',g:'Кор',l:3,eq:'немає',mode:'turns',s:40,d:'Лежачи, тримайтеся за щиколотки партнера, що стоїть над головою. Піднімайте прямі ноги, партнер штовхає їх униз. Не торкайтеся підлоги.',t:'Поперек притиснутий до підлоги.'},
+{id:'side-plank-five',n:'Бокова планка з п\'ятюнею',g:'Кор',l:3,eq:'немає',mode:'together',s:30,d:'Бокові планки одна проти одної. Вільна рука тягнеться вгору до п\'ятюні. На другій половині змініть бік.',t:'Таз високо, плечі над ліктем.'},
+{id:'back-stretch',n:'Розтяжка спина до спини',g:'Розтяжка',l:1,eq:'немає',mode:'turns',s:40,d:'Сидячи спина до спини, по черзі нахиляйтесь уперед і дайте партнеру розтягнути спину.',t:'Дихайте повільно, без ривків.'},
+{id:'seated-twist',n:'Скручування сидячи',g:'Розтяжка',l:1,eq:'немає',mode:'together',s:40,d:'Сидячи спина до спини, повертайтесь в один бік, поклавши руку на коліно партнера. На другій половині змініть напрямок.',t:'Скручуйтеся від грудної клітки, не від шиї.'},
+{id:'butterfly',n:'Метелик із притиском',g:'Розтяжка',l:1,eq:'немає',mode:'together',s:40,d:'Сядьте обличчям одне до одного, підошви разом. Тримайте руки партнера й ніжно тягніться вперед.',t:'Спина рівна, тягніться грудьми.'}
+];
+const GROUPS=['Усі','Ноги','Верх','Кор','Кардіо','Розтяжка'];
+const MODE={together:'Разом',turns:'По черзі'};
+const exById=id=>EX.find(e=>e.id===id);
+
+const store={
+  get(k,d){try{const v=localStorage.getItem('udvokh.'+k);return v?JSON.parse(v):d}catch(e){return d}},
+  set(k,v){try{localStorage.setItem('udvokh.'+k,JSON.stringify(v))}catch(e){}}
+};
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const pad=n=>String(n).padStart(2,'0');
+const ymd=d=>d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+const uid=()=>Math.random().toString(36).slice(2,9);
+
+const today=new Date();
+const sample=['mirror-lunge','pushup-five','plank-tap','jump-five','assist-squat','back-stretch'];
+const st={
+  names:store.get('names',['Партнер А','Партнер Б']),
+  plan:store.get('plan',{items:sample,work:40,rest:20,rounds:2,name:''}),
+  tpls:store.get('tpls',[]),
+  sessions:store.get('sessions',null),
+  filter:{g:'Усі',lvl:0,eq:'',q:''},
+  month:new Date(today.getFullYear(),today.getMonth(),1),
+  sel:ymd(today),
+  rec:store.get('rec',{who:0,op:'',c3:'',c4:''})
+};
+if(!st.sessions){
+  const t=new Date(today);t.setDate(t.getDate()+1);
+  st.sessions=[{id:uid(),date:ymd(t),time:'08:00',title:'Ранковий заряд',minutes:14,done:[false,false],items:sample}];
+}
+const save=()=>{store.set('names',st.names);store.set('plan',st.plan);store.set('tpls',st.tpls);store.set('sessions',st.sessions);store.set('rec',st.rec)};
+
+/* ---------- header / names ---------- */
+const nA=$('#nameA'),nB=$('#nameB');
+nA.value=st.names[0];nB.value=st.names[1];
+[nA,nB].forEach((inp,i)=>inp.addEventListener('input',()=>{st.names[i]=inp.value.trim()||('Партнер '+(i?'Б':'А'));save();renderCalendar();}));
+const nm=i=>esc(st.names[i]);
+
+/* ---------- routing ---------- */
+const VIEWS=['exercises','builder','recovery','calendar'];
+function show(v){
+  if(!VIEWS.includes(v))v='exercises';
+  VIEWS.forEach(x=>{$('#view-'+x).hidden=x!==v;$('#tab-'+x).setAttribute('aria-selected',x===v)});
+  if(v==='builder')renderBuilder();
+  if(v==='recovery')renderRecovery();
+  if(v==='calendar')renderCalendar();
+}
+document.querySelectorAll('nav button').forEach(b=>b.addEventListener('click',()=>{
+  try{location.hash=b.dataset.view}catch(e){}
+  show(b.dataset.view);
+}));
+window.addEventListener('hashchange',()=>show(location.hash.slice(1)));
+
+/* ---------- exercises ---------- */
+function renderFilters(){
+  $('#fGroup').innerHTML=GROUPS.map(g=>`<button class="chip" aria-pressed="${st.filter.g===g}" data-g="${g}">${g}</button>`).join('');
+  const lv=[[0,'Будь-який рівень'],[1,'Легко'],[2,'Середньо'],[3,'Складно']];
+  const eq=[['','Будь-який інвентар'],['немає','Без інвентарю']];
+  $('#fOther').innerHTML=lv.map(([v,t])=>`<button class="chip" aria-pressed="${st.filter.lvl===v}" data-l="${v}">${t}</button>`).join('')+eq.map(([v,t])=>`<button class="chip" aria-pressed="${st.filter.eq===v}" data-e="${v}">${t}</button>`).join('');
+}
+$('#fGroup').addEventListener('click',e=>{const b=e.target.closest('[data-g]');if(!b)return;st.filter.g=b.dataset.g;renderFilters();renderEx()});
+$('#fOther').addEventListener('click',e=>{
+  const b=e.target.closest('button');if(!b)return;
+  if('l' in b.dataset)st.filter.lvl=+b.dataset.l;
+  if('e' in b.dataset)st.filter.eq=b.dataset.e;
+  renderFilters();renderEx();
+});
+$('#q').addEventListener('input',e=>{st.filter.q=e.target.value.trim().toLowerCase();renderEx()});
+function renderEx(){
+  const f=st.filter;
+  const list=EX.filter(e=>(f.g==='Усі'||e.g===f.g)&&(!f.lvl||e.l===f.lvl)&&(!f.eq||e.eq===f.eq)&&(!f.q||e.n.toLowerCase().includes(f.q)||e.d.toLowerCase().includes(f.q)));
+  $('#exList').innerHTML=list.length?list.map(e=>{
+    const inPlan=st.plan.items.includes(e.id);
+    return `<article class="card ex"><div class="ex-top"><div><h3>${esc(e.n)}</h3>
+    <div class="meta"><span class="tag">${e.g}</span><span class="tag lvl" title="Рівень ${e.l} з 3">${'●'.repeat(e.l)}${'○'.repeat(3-e.l)}</span><span class="tag ${e.mode}">${MODE[e.mode]}</span><span class="tag">${e.eq==='немає'?'Без інвентарю':esc(e.eq)}</span></div></div>
+    <button class="btn small ${inPlan?'':'primary'}" data-add="${e.id}">${inPlan?'Прибрати':'+ Додати'}</button></div>
+    <p style="margin:0">${esc(e.d)}</p><span class="tip">${esc(e.t)}</span></article>`}).join(''):'<div class="empty">Нічого не знайдено. Змініть фільтри.</div>';
+}
+$('#exList').addEventListener('click',e=>{
+  const b=e.target.closest('[data-add]');if(!b)return;
+  const id=b.dataset.add,i=st.plan.items.indexOf(id);
+  if(i>=0)st.plan.items.splice(i,1);else st.plan.items.push(id);
+  save();renderEx();updateCount();
+});
+function updateCount(){$('#planCount').textContent=st.plan.items.length}
+
+/* ---------- builder ---------- */
+const workI=$('#work'),restI=$('#rest'),roundsI=$('#rounds');
+function bindNum(inp,key,min,max){inp.addEventListener('input',()=>{let v=parseInt(inp.value,10);if(isNaN(v))return;st.plan[key]=Math.max(min,Math.min(max,v));save();renderTotal()});inp.addEventListener('change',()=>{inp.value=st.plan[key]})}
+bindNum(workI,'work',10,180);bindNum(restI,'rest',0,120);bindNum(roundsI,'rounds',1,10);
+$('#planName').addEventListener('input',e=>{st.plan.name=e.target.value;save()});
+function planSeconds(p=st.plan){
+  const n=p.items.length;if(!n)return 0;
+  const cells=n*p.rounds;
+  return cells*p.work+(cells-1)*p.rest;
+}
+function fmt(sec){const m=Math.floor(sec/60),s=sec%60;return m+':'+pad(s)}
+function renderTotal(){
+  const sec=planSeconds();
+  $('#total').childNodes[0].nodeValue=sec?Math.ceil(sec/60)+' хв':'0 хв';
+  $('#totalSub').textContent=st.plan.items.length?`${st.plan.items.length} вправ × ${st.plan.rounds} кіл, чистий час ${fmt(sec)}`:'Додайте вправи';
+  $('#startBtn').disabled=!st.plan.items.length;
+  $('#schedBtn').disabled=$('#saveTpl').disabled=!st.plan.items.length;
+}
+function renderBuilder(){
+  workI.value=st.plan.work;restI.value=st.plan.rest;roundsI.value=st.plan.rounds;
+  $('#planName').value=st.plan.name||'';
+  if(!$('#planDate').value)$('#planDate').value=ymd(today);
+  const items=st.plan.items;
+  $('#planList').innerHTML=items.length?items.map((id,i)=>{const e=exById(id);
+    return `<div class="card plan-item"><span class="n">${i+1}</span><div class="t">${esc(e.n)}<small>${e.g} · ${MODE[e.mode]}</small></div>
+    <button class="icon-btn" data-up="${i}" aria-label="Вище" ${i===0?'disabled':''}>↑</button>
+    <button class="icon-btn" data-down="${i}" aria-label="Нижче" ${i===items.length-1?'disabled':''}>↓</button>
+    <button class="icon-btn" data-del="${i}" aria-label="Прибрати">×</button></div>`}).join(''):'<div class="empty">Тут порожньо. Додайте вправи в розділі «Вправи».</div>';
+  renderTotal();renderTpls();updateCount();
+}
+$('#planList').addEventListener('click',e=>{
+  const b=e.target.closest('button');if(!b)return;const it=st.plan.items;
+  if('up' in b.dataset){const i=+b.dataset.up;[it[i-1],it[i]]=[it[i],it[i-1]]}
+  else if('down' in b.dataset){const i=+b.dataset.down;[it[i+1],it[i]]=[it[i],it[i+1]]}
+  else if('del' in b.dataset){it.splice(+b.dataset.del,1)}
+  save();renderBuilder();
+});
+$('#clearPlan').addEventListener('click',()=>{st.plan.items=[];save();renderBuilder()});
+function planTitle(){return (st.plan.name||'').trim()||'Тренування на двох'}
+$('#saveTpl').addEventListener('click',()=>{
+  st.tpls.push({id:uid(),name:planTitle(),items:[...st.plan.items],work:st.plan.work,rest:st.plan.rest,rounds:st.plan.rounds});
+  save();renderTpls();
+});
+$('#schedBtn').addEventListener('click',()=>{
+  const d=$('#planDate').value;if(!d)return;
+  st.sessions.push({id:uid(),date:d,time:'',title:planTitle(),minutes:Math.ceil(planSeconds()/60),done:[false,false],items:[...st.plan.items]});
+  save();
+  const [y,m]=d.split('-').map(Number);st.month=new Date(y,m-1,1);st.sel=d;
+  try{location.hash='calendar'}catch(e){}
+  show('calendar');
+});
+function renderTpls(){
+  $('#savedBox').innerHTML=st.tpls.length?`<h3>Збережені шаблони</h3><div class="list">`+st.tpls.map(t=>`<div class="card plan-item"><div class="t">${esc(t.name)}<small>${t.items.length} вправ · ${t.rounds} кіл · ${t.work}/${t.rest} с</small></div><button class="btn small" data-load="${t.id}">Відкрити</button><button class="icon-btn" data-rm="${t.id}" aria-label="Видалити шаблон">×</button></div>`).join('')+'</div>':'';
+}
+$('#savedBox').addEventListener('click',e=>{
+  const b=e.target.closest('button');if(!b)return;
+  if(b.dataset.load){const t=st.tpls.find(x=>x.id===b.dataset.load);if(t){st.plan={items:[...t.items],work:t.work,rest:t.rest,rounds:t.rounds,name:t.name};save();renderBuilder()}}
+  if(b.dataset.rm){st.tpls=st.tpls.filter(x=>x.id!==b.dataset.rm);save();renderTpls()}
+});
+
+/* ---------- timer ---------- */
+const T={ph:[],k:0,end:0,rem:0,paused:false,iv:null,lastBeep:-1,ac:null,finished:false};
+function beep(freq,dur){
+  try{
+    if(!T.ac)T.ac=new (window.AudioContext||window.webkitAudioContext)();
+    if(T.ac.state==='suspended')T.ac.resume();
+    const o=T.ac.createOscillator(),g=T.ac.createGain();
+    o.frequency.value=freq;o.connect(g);g.connect(T.ac.destination);
+    g.gain.setValueAtTime(.18,T.ac.currentTime);g.gain.exponentialRampToValueAtTime(.001,T.ac.currentTime+dur);
+    o.start();o.stop(T.ac.currentTime+dur);
+  }catch(e){}
+}
+function buildPhases(){
+  const items=st.plan.items.map(exById).filter(Boolean),ph=[];
+  for(let r=1;r<=st.plan.rounds;r++)items.forEach((ex,i)=>{
+    ph.push({type:'work',ex,round:r,i,n:items.length,dur:st.plan.work});
+    const last=r===st.plan.rounds&&i===items.length-1;
+    if(!last&&st.plan.rest>0)ph.push({type:'rest',ex:i+1<items.length?items[i+1]:items[0],round:r,i,n:items.length,dur:st.plan.rest});
+  });
+  return ph;
+}
+function startPhase(k){
+  T.k=k;const p=T.ph[k];
+  T.end=Date.now()+p.dur*1000;T.paused=false;T.lastBeep=-1;
+  $('#tPause').textContent='Пауза';
+  renderTimer();
+  beep(p.type==='work'?880:440,.3);
+}
+function renderTimer(){
+  const p=T.ph[T.k],box=$('#timer');
+  box.dataset.type=p.type;
+  $('#tProgress').textContent=`Коло ${p.round} з ${st.plan.rounds} · вправа ${p.i+1} з ${p.n}`;
+  $('#tPhase').textContent=p.type==='work'?'Працюємо':'Відпочинок';
+  const e=p.ex;
+  $('#tCur').innerHTML=p.type==='work'
+    ?`<h2>${esc(e.n)}</h2><span class="tag ${e.mode}">${MODE[e.mode]}</span><p>${esc(e.d)}</p>${e.mode==='turns'?`<p class="next">Спочатку ${nm((p.round+p.i)%2)}, на другій половині ${nm((p.round+p.i+1)%2)}.</p>`:''}`
+    :`<p class="next">Далі</p><h2>${esc(e.n)}</h2><p>${esc(e.d)}</p>`;
+  tick();
+}
+function tick(){
+  if(T.finished)return;
+  const p=T.ph[T.k];if(!p)return;
+  let rem=T.paused?T.rem:(T.end-Date.now())/1000;
+  if(rem<=0&&!T.paused){
+    if(T.k+1>=T.ph.length){finishTimer();return}
+    startPhase(T.k+1);return;
+  }
+  const c=Math.ceil(rem);
+  $('#tNum').textContent=c;
+  $('#tFg').style.strokeDashoffset=String(339.29*(1-rem/p.dur));
+  if(!T.paused&&c<=3&&c>0&&T.lastBeep!==c){T.lastBeep=c;beep(660,.12)}
+  // turn-based halfway hint is shown in text only
+}
+function openTimer(){
+  T.ph=buildPhases();if(!T.ph.length)return;
+  T.finished=false;
+  $('#timer').classList.add('open');document.body.style.overflow='hidden';
+  $('#tCtl').style.display='flex';$('#tPhase').style.display='';$('.ring').style.display='';
+  beep(1,.01);
+  startPhase(0);
+  clearInterval(T.iv);T.iv=setInterval(tick,200);
+}
+function closeTimer(){
+  clearInterval(T.iv);T.finished=false;
+  $('#timer').classList.remove('open');document.body.style.overflow='';
+}
+function finishTimer(){
+  clearInterval(T.iv);T.finished=true;
+  beep(988,.5);
+  const box=$('#timer');box.dataset.type='work';
+  $('#tProgress').textContent='Готово';
+  $('.ring').style.display='none';$('#tPhase').style.display='none';
+  $('#tCtl').style.display='none';
+  $('#tCur').innerHTML=`<div class="done-box"><h2>Тренування завершено</h2><p>Молодці обоє. Запишемо його в календар?</p><div class="who" style="justify-content:center;margin:12px 0"><label class="a"><input type="checkbox" id="dA" checked>${nm(0)}</label><label class="b"><input type="checkbox" id="dB" checked>${nm(1)}</label></div><button class="btn primary big" id="logBtn">Записати</button></div>`;
+}
+$('#timer').addEventListener('click',e=>{
+  if(e.target.id==='logBtn'){
+    st.sessions.push({id:uid(),date:ymd(new Date()),time:'',title:planTitle(),minutes:Math.ceil(planSeconds()/60),done:[$('#dA').checked,$('#dB').checked],items:[...st.plan.items]});
+    save();closeTimer();
+    st.month=new Date(today.getFullYear(),today.getMonth(),1);st.sel=ymd(new Date());
+    try{location.hash='calendar'}catch(err){}
+    show('calendar');
+  }
+});
+$('#startBtn').addEventListener('click',openTimer);
+$('#tClose').addEventListener('click',closeTimer);
+$('#tPause').addEventListener('click',()=>{
+  if(T.paused){T.end=Date.now()+T.rem*1000;T.paused=false;$('#tPause').textContent='Пауза'}
+  else{T.rem=Math.max(0,(T.end-Date.now())/1000);T.paused=true;$('#tPause').textContent='Продовжити'}
+});
+$('#tSkip').addEventListener('click',()=>{if(T.k+1>=T.ph.length)finishTimer();else startPhase(T.k+1)});
+$('#tPrev').addEventListener('click',()=>{
+  const p=T.ph[T.k],elapsed=p.dur-(T.paused?T.rem:(T.end-Date.now())/1000);
+  startPhase(elapsed>3||T.k===0?T.k:T.k-1);
+});
+
+/* ---------- calendar ---------- */
+const MONTHS=['січень','лютий','березень','квітень','травень','червень','липень','серпень','вересень','жовтень','листопад','грудень'];
+const DOW=['Пн','Вт','Ср','Чт','Пт','Сб','Нд'];
+const isDone=s=>s.done[0]||s.done[1];
+function weekStart(d){const x=new Date(d.getFullYear(),d.getMonth(),d.getDate());x.setDate(x.getDate()-((x.getDay()+6)%7));return x}
+function renderStats(){
+  const ws=ymd(weekStart(today)),we=ymd(new Date(weekStart(today).getTime()+6*864e5));
+  const week=st.sessions.filter(s=>isDone(s)&&s.date>=ws&&s.date<=we);
+  const mk=today.getFullYear()+'-'+pad(today.getMonth()+1);
+  const month=st.sessions.filter(s=>s.date.startsWith(mk));
+  const cnt=i=>month.filter(s=>s.done[i]).length;
+  const days=new Set(st.sessions.filter(isDone).map(s=>s.date));
+  let streak=0,d=new Date(today);
+  if(!days.has(ymd(d)))d.setDate(d.getDate()-1);
+  while(days.has(ymd(d))){streak++;d.setDate(d.getDate()-1)}
+  const mins=week.reduce((a,s)=>a+(s.minutes||0),0);
+  $('#stats').innerHTML=`<div class="stat"><b>${week.length}</b><span>тренувань за тиждень, ${mins} хв</span></div>
+  <div class="stat"><b>${streak}</b><span>${streak===1?'день':'днів'} підряд</span></div>
+  <div class="stat"><b><span style="color:var(--a)">${cnt(0)}</span> / <span style="color:var(--b)">${cnt(1)}</span></b><span>цього місяця: ${nm(0)} / ${nm(1)}</span></div>`;
+}
+function renderCalendar(){
+  renderStats();
+  const y=st.month.getFullYear(),m=st.month.getMonth();
+  $('#monthTitle').textContent=MONTHS[m]+' '+y;
+  const first=new Date(y,m,1),offset=(first.getDay()+6)%7,days=new Date(y,m+1,0).getDate();
+  let h=DOW.map(d=>`<div class="dow">${d}</div>`).join('');
+  const todayS=ymd(today);
+  for(let i=0;i<offset;i++)h+='<div></div>';
+  for(let d=1;d<=days;d++){
+    const ds=y+'-'+pad(m+1)+'-'+pad(d),ss=st.sessions.filter(s=>s.date===ds);
+    h+=`<button class="day ${ds===todayS?'today':''}" data-d="${ds}" aria-pressed="${ds===st.sel}" aria-label="${d} ${MONTHS[m]}${ss.length?', тренувань: '+ss.length:''}"><span>${d}</span><span class="dots">${ss.slice(0,3).map(s=>`<i class="${isDone(s)?'done':''}"></i>`).join('')}</span></button>`;
+  }
+  $('#calGrid').innerHTML=h;
+  renderDay();
+}
+function renderDay(){
+  const ds=st.sel,[y,m,d]=ds.split('-').map(Number);
+  const ss=st.sessions.filter(s=>s.date===ds).sort((a,b)=>(a.time||'').localeCompare(b.time||''));
+  const opts='<option value="">Своє тренування</option>'+st.tpls.map(t=>`<option value="t:${t.id}">${esc(t.name)}</option>`).join('')+(st.plan.items.length?'<option value="cur">Поточне з конструктора</option>':'');
+  $('#dayPanel').innerHTML=`<h2 style="font-size:17px">${d} ${MONTHS[m-1]}</h2>`+
+  (ss.length?ss.map(s=>`<div class="sess" data-id="${s.id}"><div class="top"><div><b>${esc(s.title)}</b><div class="tip">${s.time?esc(s.time)+' · ':''}${s.minutes?s.minutes+' хв':'час не вказано'}${s.items?' · '+s.items.length+' вправ':''}</div></div><button class="icon-btn" data-del="${s.id}" aria-label="Видалити тренування">×</button></div>
+  <div class="who">${s.rec?`<label class="${st.rec.who?'b':'a'}"><input type="checkbox" data-who="${st.rec.who}" ${s.done[st.rec.who]?'checked':''}>${s.items?'Виконано':'Пройдено'}</label>`:`<label class="a"><input type="checkbox" data-who="0" ${s.done[0]?'checked':''}>${nm(0)}</label><label class="b"><input type="checkbox" data-who="1" ${s.done[1]?'checked':''}>${nm(1)}</label>`}</div>
+  ${s.items&&s.items.length?`<div class="row"><button class="btn small" data-run="${s.id}">Запустити</button></div>`:''}</div>`).join(''):'<p class="tip" style="margin:6px 0 0">На цей день нічого не заплановано.</p>')+
+  `<div class="addform"><label class="field full">Шаблон<select id="addTpl">${opts}</select></label>
+  <label class="field">Назва<input id="addTitle" type="text" maxlength="40" placeholder="Назва"></label>
+  <label class="field">Час<input id="addTime" type="time"></label>
+  <button class="btn primary full" id="addBtn">Додати на цей день</button></div>`;
+}
+$('#calGrid').addEventListener('click',e=>{const b=e.target.closest('[data-d]');if(!b)return;st.sel=b.dataset.d;renderCalendar()});
+$('#prevM').addEventListener('click',()=>{st.month=new Date(st.month.getFullYear(),st.month.getMonth()-1,1);renderCalendar()});
+$('#nextM').addEventListener('click',()=>{st.month=new Date(st.month.getFullYear(),st.month.getMonth()+1,1);renderCalendar()});
+$('#dayPanel').addEventListener('click',e=>{
+  const b=e.target.closest('button');if(!b)return;
+  if(b.dataset.del){st.sessions=st.sessions.filter(s=>s.id!==b.dataset.del);save();renderCalendar()}
+  else if(b.dataset.run){
+    const s=st.sessions.find(x=>x.id===b.dataset.run);
+    if(s&&s.rec)openRp(s.items,s.title,s.id,false);
+    else if(s){st.plan.items=[...s.items];st.plan.name=s.title;save();updateCount();openTimer()}
+  }
+  else if(b.id==='addBtn'){
+    const sel=$('#addTpl').value;let title=$('#addTitle').value.trim(),items=null,minutes=0;
+    if(sel.startsWith('t:')){const t=st.tpls.find(x=>x.id===sel.slice(2));if(t){items=[...t.items];title=title||t.name;minutes=Math.ceil(planSeconds(t)/60)}}
+    else if(sel==='cur'){items=[...st.plan.items];title=title||planTitle();minutes=Math.ceil(planSeconds()/60)}
+    st.sessions.push({id:uid(),date:st.sel,time:$('#addTime').value,title:title||'Тренування',minutes,done:[false,false],items});
+    save();renderCalendar();
+  }
+});
+$('#dayPanel').addEventListener('change',e=>{
+  const c=e.target.closest('[data-who]');if(!c)return;
+  const id=c.closest('.sess').dataset.id,s=st.sessions.find(x=>x.id===id);
+  if(s){s.done[+c.dataset.who]=c.checked;save();renderCalendar()}
+});
+$('#dayPanel').addEventListener('input',e=>{
+  if(e.target.id==='addTpl'){const v=e.target.value;if(v.startsWith('t:')){const t=st.tpls.find(x=>x.id===v.slice(2));if(t)$('#addTitle').value=t.name}}
+});
+
+/* ---------- recovery: exercise data ---------- */
+const o=(b,c)=>Object.assign({},b,c);
+const LY={h:[40,112],n:[54,117],p:[112,117],k:[140,86],a:[164,117],t:[176,117],k2:[144,84],a2:[168,117],t2:[180,117],e:[84,118],w:[108,118]};
+const ST={h:[110,28],n:[110,40],p:[110,78],k:[110,100],a:[110,120],t:[122,120],e:[112,58],w:[114,76]};
+const QD={h:[156,60],n:[140,66],p:[80,70],k:[80,108],a:[54,118],t:[46,118],e:[142,92],w:[142,118]};
+const LS=o(LY,{k:[150,117],a:[188,117],t:[190,105],k2:[150,118],a2:[188,118],t2:[190,106]});
+const WALL=x=>`<line class="prop" x1="${x}" y1="10" x2="${x}" y2="122"/>`;
+const walkEx=(min)=>({n:'Прогулянка '+min+' хв',dur:min*60,showReps:false,
+  cyc:[['Ідіть рівно, у темпі, коли можна говорити',1,0,1],['Ідіть рівно, у темпі, коли можна говорити',1,1,0]],
+  P:[o(ST,{k:[122,98],a:[132,120],t:[144,120],k2:[100,100],a2:[90,116],t2:[100,119],e:[96,60],w:[90,78]}),o(ST,{k:[100,100],a:[90,116],t:[100,119],k2:[122,98],a2:[132,120],t2:[144,120],e:[126,58],w:[134,76]})],
+  steps:['Ідіть по рівній поверхні, без пагорбів.','Темп такий, щоб могли вільно розмовляти.','Зупиняйтесь і відпочивайте, коли втомилися.'],
+  tip:'Додавайте час поступово, по 2–5 хвилин на тиждень.',avoid:'Тяжкість унизу живота чи біль у шві: скоротіть прогулянку.'});
+const RX={
+'r-breath':{n:'Діафрагмальне дихання',reps:6,cyc:[['Вдих носом: живіт мʼяко піднімається',4,0,1],['Видих повільно: живіт опускається',6,1,0]],P:[LY,LY],hl:{k:'belly',m:'expand'},
+  steps:['Ляжте на спину, коліна зігнуті, під ними валик або подушка.','Долоні на низ ребер. На вдиху через ніс відчуйте, як ребра розходяться вбік.','Видихайте повільно через злегка стиснуті губи. Плечі й шия розслаблені.'],tip:'Перша вправа відновлення. Її можна робити й сидячи.',avoid:'Не напружуйте шов і не втягуйте живіт навмисно.'},
+'r-ankle':{n:'Помпа стопами',reps:10,cyc:[['Носки на себе',2,0,1],['Носки від себе',2,1,0]],P:[o(LS,{t:[191,104]}),o(LS,{t:[200,118]})],hl:{k:'glow',j:'t',m:'glow'},
+  steps:['Лягте або сядьте, ноги прямі.','Тягніть носки на себе, потім від себе.','Працюють лише стопи, рух плавний.'],tip:'Підтримує кровообіг у ногах, особливо в перші дні.',avoid:'Біль чи набряк в одній литці: зверніться до лікаря.'},
+'r-kegel':{n:'Скорочення тазового дна',reps:6,cyc:[['Вдих, усе розслаблено',3,0,0],['Видих: мʼяко підтягніть тазове дно вгору',2,0,1],['Утримуйте 4 с, не затримуйте дихання',4,1,1],['Повністю розслабте',4,1,0]],P:[LY,LY],hl:{k:'glow',j:'p',m:'glow'},
+  steps:['Лягте, коліна зігнуті.','На видиху мʼяко підтягніть тазове дно, ніби зупиняєте потік сечі.','Утримуйте 4 секунди, дихайте, потім повністю розслабте.'],tip:'Розслаблення важливе так само, як скорочення. Сідниці й живіт не напружуйте.',avoid:'Тягнучий біль у шві: зменште силу скорочення.'},
+'r-shoulder':{n:'Рухи плечима',reps:6,cyc:[['Плечі вгору й назад',3,0,1],['Опустіть униз і розслабте',3,1,0]],P:[o(ST,{e:[126,50],w:[136,34]}),o(ST,{e:[94,56],w:[88,72]})],hl:{k:'glow',j:'n',m:'glow'},
+  steps:['Станьте або сядьте рівно.','Підніміть плечі до вух, відведіть назад, опустіть униз.','Рух повільний, шия розслаблена.'],tip:'Знімає напругу від годування й носіння дитини.',avoid:''},
+'r-walk5':walkEx(5),'r-walk15':walkEx(15),'r-walk20':walkEx(20),'r-walk30':walkEx(30),
+'r-tra':{n:'Підтягування низу живота',reps:6,cyc:[['Вдих, живіт розслаблений',3,0,0],['Видих: мʼяко стягніть низ живота',3,0,1],['Утримуйте 3 с, дихайте',3,1,1],['Розслабте',2,1,0]],P:[LY,LY],hl:{k:'belly',m:'draw'},
+  steps:['Лягте, коліна зігнуті, поперек у нейтральному положенні.','На видиху мʼяко «стягніть» низ живота, ніби застібаєте тугі джинси.','Тримайте 3 секунди, дихайте, потім розслабте.'],tip:'Це дуже ніжний рух, його майже не видно ззовні.',avoid:'Якщо посередині живота випинається «гребінь», зупиніться й покажіть лікарю або фізіотерапевту.'},
+'r-tilt':{n:'Нахил таза лежачи',reps:8,cyc:[['Видих: притисніть поперек до підлоги',3,0,1],['Вдих: поверніться в нейтраль',3,1,0]],P:[o(LY,{p:[112,112]}),o(LY,{p:[112,118],n:[54,118]})],hl:{k:'glow',j:'p',m:'glow'},
+  steps:['Лягте, коліна зігнуті, стопи на підлозі.','На видиху притисніть поперек до підлоги, підкочуючи таз.','На вдиху поверніться в нейтральне положення.'],tip:'Амплітуда мала. Це рух тазом, а не підйом сідниць.',avoid:'Біль у шві: зменште амплітуду.'},
+'r-heelslide':{n:'Ковзання п\'ятою',reps:8,cyc:[['Видих: ковзайте п\'ятою вперед',3,0,1],['Вдих: поверніть ногу',3,1,0]],P:[LY,o(LY,{k:[150,117],a:[186,117],t:[188,117]})],hl:{k:'glow',j:'a',m:'glow'},
+  steps:['Лягте, коліна зігнуті.','На видиху повільно ковзайте однією п\'ятою вперед, не відриваючи її від підлоги.','На вдиху поверніть ногу. Через 4 повтори змініть ногу.'],tip:'Таз і поперек не гойдаються.',avoid:'Тягне шов: зупиніться на меншому розмаху.'},
+'r-ballsqueeze':{n:'Стискання подушки колінами',reps:8,cyc:[['Видих: стисніть подушку колінами',2,0,1],['Утримуйте',2,1,1],['Вдих: розслабте',3,1,0]],P:[LY,LY],hl:{k:'ball',m:'ball'},
+  steps:['Лягте, коліна зігнуті, між колінами подушка.','На видиху стисніть подушку колінами.','Утримуйте 2 секунди, на вдиху розслабте.'],tip:'Підключає внутрішню поверхню стегон і глибокі мʼязи кору.',avoid:'Не стискайте сідниці й не затримуйте дихання.'},
+'r-bridge':{n:'Місток',reps:8,cyc:[['Видих: піднімайте таз',2,0,1],['Угорі 1 с',1,1,1],['Вдих: повільно опускайте',3,1,0]],P:[LY,o(LY,{p:[112,88],n:[60,116],h:[44,111]})],hl:{k:'glow',j:'p',m:'glow'},
+  steps:['Лягте, коліна зігнуті, стопи на ширині таза.','На видиху повільно піднімайте таз, поки тіло не утворить пряму лінію від плечей до колін.','На вдиху так само повільно опускайтеся.'],tip:'Поперек не прогинайте. Піднімайте таз силою сідниць.',avoid:'Лише після дозволу лікаря. Біль чи тиск у тазі: зупиніться.'},
+'r-wallsit':{n:'Присід біля стіни',reps:8,props:WALL(68),cyc:[['Видих: ковзайте вниз по стіні',3,0,1],['Вдих унизу',1,1,1],['Видих: підіймайтесь',3,1,0]],
+  P:[{h:[84,28],n:[78,40],p:[76,78],k:[86,100],a:[90,120],t:[102,120],e:[90,58],w:[100,72]},{h:[84,44],n:[78,56],p:[78,96],k:[112,96],a:[102,120],t:[114,120],e:[98,76],w:[116,86]}],hl:{k:'glow',j:'p',m:'glow'},
+  steps:['Станьте спиною до стіни, стопи на ширині плечей, трохи вперед.','На видиху ковзайте вниз приблизно на чверть присіду.','Піднімайтесь на видиху, внизу вдихайте.'],tip:'Коліна дивляться туди ж, куди й стопи.',avoid:'Лише після дозволу лікаря. Присід не глибший, ніж комфортно.'},
+'r-wallpush':{n:'Віджимання від стіни',reps:10,props:WALL(190),cyc:[['Вдих: наближайте груди до стіни',2,0,1],['Видих: відштовхніться',2,1,0]],
+  P:[{h:[160,34],n:[152,46],p:[126,83],k:[112,103],a:[100,120],t:[112,120],e:[170,50],w:[188,54]},{h:[176,44],n:[168,56],p:[142,81],k:[120,101],a:[100,120],t:[112,120],e:[180,68],w:[188,54]}],hl:{k:'glow',j:'n',m:'glow'},
+  steps:['Станьте на крок від стіни, долоні на рівні грудей.','Вдих: зігніть лікті, наблизьте груди до стіни.','Видих: випряміть руки. Тіло рівне, як дошка.'],tip:'Живіт не провисає. Вправа для рук і спини, потрібних при догляді за малюком.',avoid:'Лише після дозволу лікаря.'},
+'r-sit2stand':{n:'Вставання зі стільця',reps:8,props:'<path class="prop" d="M64 86 H112 M66 86 V122 M110 86 V122 M64 50 V86"/>',cyc:[['Видих: вставайте',2,0,1],['Угорі',1,1,1],['Вдих: повільно сідайте',3,1,0]],
+  P:[{h:[90,34],n:[90,46],p:[92,84],k:[128,84],a:[130,120],t:[142,120],e:[108,62],w:[124,58]},{h:[118,26],n:[118,38],p:[118,78],k:[122,100],a:[124,120],t:[136,120],e:[130,56],w:[146,56]}],hl:{k:'glow',j:'p',m:'glow'},
+  steps:['Сядьте на край стільця, стопи на ширині таза.','На видиху встаньте без допомоги рук, нахиляючи корпус уперед.','На вдиху повільно сідайте.'],tip:'Цей рух потрібен щодня, коли дитина на руках.',avoid:'Лише після дозволу лікаря.'},
+'r-calf':{n:'Підйом на носки',reps:10,props:WALL(156),cyc:[['Видих: на носки',2,0,1],['Вдих: повільно вниз',3,1,0]],
+  P:[o(ST,{e:[134,62],w:[154,70]}),{h:[110,20],n:[110,32],p:[110,70],k:[110,92],a:[110,112],t:[122,120],e:[134,54],w:[154,62]}],hl:{k:'glow',j:'a',m:'glow'},
+  steps:['Станьте біля стіни, злегка тримаючись рукою.','На видиху підніміться на носки.','На вдиху повільно опустіться.'],tip:'Підтримує кровообіг у ногах і силу стоп.',avoid:'Біль чи набряк у литці: зупиніться й зверніться до лікаря.'},
+'r-catcow':{n:'Кішка-корова',reps:6,cyc:[['Видих: округліть спину',3,0,1],['Вдих: плавно випряміть',3,1,0]],
+  P:[o(QD,{m:[110,80],h:[156,58]}),o(QD,{m:[110,56],n:[140,74],h:[152,88]})],hl:{k:'glow',j:'p',m:'glow'},
+  steps:['Станьте на коліна й долоні: плечі над руками, коліна під тазом.','На видиху округліть спину, голову опустіть.','На вдиху плавно випряміть спину, погляд на підлогу.'],tip:'Амплітуда мала, без розтягування шва.',avoid:'Лише після дозволу лікаря. Тягне шов: зменште розмах.'},
+'r-birddog':{n:'Птах-собака',reps:6,cyc:[['Видих: тягніть руку вперед, протилежну ногу назад',3,0,1],['Утримуйте 2 с',2,1,1],['Вдих: поверніться',3,1,0]],
+  P:[o(QD,{e2:[142,92],w2:[142,118],k2:[84,108],a2:[58,118],t2:[50,118]}),o(QD,{e:[162,64],w:[186,62],k:[58,76],a:[34,80],t:[26,82],e2:[142,92],w2:[142,118],k2:[84,108],a2:[58,118],t2:[50,118]})],hl:{k:'glow',j:'p',m:'glow'},
+  steps:['Станьте на коліна й долоні, спина рівна.','На видиху витягніть праву руку вперед і ліву ногу назад до рівня тулуба.','Утримуйте 2 секунди, на вдиху поверніться. Чергуйте боки.'],tip:'Таз не гойдається, живіт мʼяко підтягнутий.',avoid:'Лише після дозволу лікаря. Не прогинайте поперек.'},
+'r-plank':{n:'Планка на колінах',dur:30,showReps:false,cyc:[['Тримайте лінію, дихайте рівно',5,0,.3],['Тримайте лінію, дихайте рівно',5,.3,0]],
+  P:[{h:[162,80],n:[150,84],p:[100,101],k:[70,112],a:[44,119],t:[34,119],e:[146,116],w:[168,116]},{h:[162,78],n:[150,82],p:[100,99],k:[70,112],a:[44,119],t:[34,119],e:[146,116],w:[168,116]}],hl:{k:'glow',j:'p',m:'glow'},
+  steps:['Станьте на передпліччя й коліна, тіло утворює пряму лінію від колін до голови.','Мʼяко підтягніть низ живота, дихайте рівно.','Тримайте 30 секунд, не провисайте.'],tip:'Найскладніша вправа фази. Пропустіть її, якщо живіт випинається.',avoid:'Лише після дозволу лікаря. Випинання посередині живота: стоп.'},
+'r-hinge':{n:'Нахил із прямою спиною',reps:8,cyc:[['Вдих: таз назад, спина рівна',3,0,1],['Видих: випрямляйтесь',3,1,0]],
+  P:[o(ST,{e:[112,72],w:[114,92]}),{h:[160,52],n:[146,52],p:[96,78],k:[106,100],a:[110,120],t:[122,120],e:[148,74],w:[150,96]}],hl:{k:'glow',j:'p',m:'glow'},
+  steps:['Станьте, стопи на ширині таза, коліна трохи зігнуті.','На вдиху відведіть таз назад, спина рівна, руки ковзають по стегнах.','На видиху випряміться силою сідниць.'],tip:'Так безпечно піднімати дитину чи речі з підлоги.',avoid:'Лише після дозволу лікаря.'}
+};
+const WO={
+ P1:{t:'Щоденний мінімум',items:['r-breath','r-ankle','r-kegel','r-shoulder','r-walk5']},
+ P2:{t:'Кор і тазове дно',items:['r-breath','r-kegel','r-tra','r-tilt','r-heelslide','r-ballsqueeze']},
+ P2W:{t:'Прогулянка',items:['r-walk15']},
+ P3A:{t:'Сила, день A',items:['r-kegel','r-tra','r-bridge','r-wallsit','r-wallpush','r-catcow']},
+ P3B:{t:'Сила, день B',items:['r-tra','r-sit2stand','r-calf','r-bridge','r-catcow']},
+ P3W:{t:'Прогулянка',items:['r-walk20']},
+ P4A:{t:'Кор і баланс',items:['r-tra','r-birddog','r-plank','r-hinge','r-sit2stand']},
+ P4B:{t:'Ноги й спина',items:['r-kegel','r-bridge','r-wallsit','r-wallpush','r-catcow']},
+ P4W:{t:'Прогулянка',items:['r-walk30']}
+};
+const PH=[
+ {id:1,t:'Фаза 1 · тижні 0–2',s:'Дихання, кровообіг, перші кроки',gate:'Починайте, коли хірург дозволив вставати й ходити. Біль у шві означає стоп.',w:['P1']},
+ {id:2,t:'Фаза 2 · тижні 2–6',s:'Глибокі мʼязи кору, тазове дно, довші прогулянки',gate:'Шов не болить у спокої, немає почервоніння чи виділень.',w:['P2','P2W']},
+ {id:3,t:'Фаза 3 · від 6–8 тижнів',s:'Сила без стрибків і скручувань',gate:'Тільки після огляду лікаря (зазвичай 6–8 тижнів). Бажано й огляд фізіотерапевта тазового дна.',w:['P3A','P3B','P3W']},
+ {id:4,t:'Фаза 4 · від ~12 тижнів',s:'Повернення до повноцінних навантажень',gate:'Дозвіл лікаря й оцінка тазового дна. Біг і стрибки не раніше 12 тижнів і лише без симптомів: без підтікання, тяжкості внизу та випинання живота.',w:['P4A','P4B','P4W']}
+];
+const cycLen=ex=>ex.cyc.reduce((a,c)=>a+c[1],0);
+const exTotal=ex=>ex.dur||ex.reps*cycLen(ex);
+const secs=items=>items.reduce((a,id)=>a+exTotal(RX[id]),0);
+const ease=x=>.5-.5*Math.cos(Math.PI*Math.min(1,Math.max(0,x)));
+function cycleAt(ex,el){
+  const cl=cycLen(ex);let pos=el%cl;
+  for(const c of ex.cyc){if(pos<c[1])return{l:c[0],v:c[2]+(c[3]-c[2])*ease(pos/c[1])};pos-=c[1]}
+  return{l:'',v:0};
+}
+const pd=s=>{const [y,m,d]=s.split('-').map(Number);return new Date(y,m-1,d)};
+const addD=(d,n)=>{const x=new Date(d);x.setDate(x.getDate()+n);return x};
+const minsOf=sec=>Math.max(1,Math.round(sec/60));
+
+/* ---------- recovery: plan generator ---------- */
+function genRec(){
+  const R=st.rec;if(!R.op)return 0;
+  const op=pd(R.op),c3=R.c3?pd(R.c3):null,c4=R.c4?pd(R.c4):null;
+  const keep={};st.sessions.forEach(s=>{if(s.src==='rec')keep[s.date+'|'+s.title]=s.done});
+  st.sessions=st.sessions.filter(s=>s.src!=='rec');
+  const out=[];
+  const add=(d,title,items)=>{const date=ymd(d);out.push({id:uid(),date,time:'',title,minutes:items?minsOf(secs(items)):0,done:keep[date+'|'+title]||[false,false],items:items?[...items]:null,rec:true,src:'rec'})};
+  const wd=d=>(d.getDay()+6)%7;
+  for(let i=1;i<=13;i++)add(addD(op,i),'Фаза 1 · '+WO.P1.t,WO.P1.items);
+  const p2End=c3?addD(c3,-1):addD(op,41);
+  for(let d=addD(op,14);d<=p2End;d=addD(d,1))add(d,wd(d)===2||wd(d)===6?'Фаза 2 · '+WO.P2W.t:'Фаза 2 · '+WO.P2.t,wd(d)===2||wd(d)===6?WO.P2W.items:WO.P2.items);
+  if(!c3)add(addD(op,42),'Огляд лікаря: дозвіл на фазу 3',null);
+  if(c3){
+    const end=c4?addD(c4,-1):addD(c3,41);
+    for(let d=c3;d<=end;d=addD(d,1)){const w=wd(d);
+      if(w===0||w===4)add(d,'Фаза 3 · '+WO.P3A.t,WO.P3A.items);
+      else if(w===2)add(d,'Фаза 3 · '+WO.P3B.t,WO.P3B.items);
+      else if(w===6)add(d,'Фаза 3 · '+WO.P3W.t,WO.P3W.items);}
+    if(!c4)add(addD(c3,42)>addD(op,84)?addD(c3,42):addD(op,84),'Огляд: дозвіл на фазу 4 і тазове дно',null);
+  }
+  if(c4){
+    for(let d=c4;d<=addD(c4,55);d=addD(d,1)){const w=wd(d);
+      if(w===0||w===4)add(d,'Фаза 4 · '+WO.P4A.t,WO.P4A.items);
+      else if(w===2)add(d,'Фаза 4 · '+WO.P4B.t,WO.P4B.items);
+      else if(w===6)add(d,'Фаза 4 · '+WO.P4W.t,WO.P4W.items);}
+  }
+  st.sessions.push(...out);save();return out.length;
+}
+
+/* ---------- recovery: view ---------- */
+function recPhaseNow(){
+  const R=st.rec;if(!R.op)return 0;
+  const t0=new Date(today.getFullYear(),today.getMonth(),today.getDate());
+  const days=Math.floor((t0-pd(R.op))/864e5);if(days<0)return 0;
+  if(days<14)return 1;
+  if(!R.c3||t0<pd(R.c3))return 2;
+  if(!R.c4||t0<pd(R.c4))return 3;
+  return 4;
+}
+function recStatus(){
+  const R=st.rec;if(!R.op)return 'Вкажіть дату операції, і план з’явиться в календарі.';
+  const t0=new Date(today.getFullYear(),today.getMonth(),today.getDate());
+  const days=Math.floor((t0-pd(R.op))/864e5);
+  if(days<0)return 'Дата операції в майбутньому. Перевірте її.';
+  const ph=recPhaseNow();
+  let s=`Зараз ${Math.floor(days/7)+1}-й тиждень після операції, фаза ${ph}.`;
+  if(ph===2&&days>=42)s+=' Вам час на огляд лікаря. Без дозволу до фази 3 не переходьте.';
+  if(ph===3&&days>=84&&!R.c4)s+=' Для фази 4 потрібен дозвіл лікаря й оцінка тазового дна.';
+  return s;
+}
+function renderRecovery(){
+  $('#recWarn').innerHTML=`<details open><summary>Важливо перед початком</summary><ul>
+  <li>Це орієнтири з відкритих рекомендацій для відновлення після кесаревого, а не медична порада. Темп і дозволи визначає лікар, який знає перебіг операції.</li>
+  <li><b>До лікаря негайно:</b> температура, сильна кровотеча, почервоніння чи виділення зі шва, біль або набряк в одній литці, біль у грудях чи задишка, різкий сильний біль.</li>
+  <li><b>Зупиніться, якщо:</b> болить шов, є тиск чи тяжкість у тазі, підтікає сеча, посередині живота випинається «гребінь».</li>
+  <li><b>До дозволу лікаря не робіть:</b> скручування й підйоми прямих ніг, планки, стрибки, біг, вагу більшу за дитину.</li></ul></details>`;
+  const R=st.rec;
+  $('#recSetup').innerHTML=`<div class="setup-grid">
+   <label class="field full">Хто відновлюється<select id="rWho"><option value="0" ${R.who==0?'selected':''}>${nm(0)}</option><option value="1" ${R.who==1?'selected':''}>${nm(1)}</option></select></label>
+   <label class="field full">Дата операції<input id="rOp" type="date" value="${R.op}"></label>
+   <label class="field">Дозвіл лікаря на фазу 3<input id="rC3" type="date" value="${R.c3}"></label>
+   <label class="field">Дозвіл на фазу 4<input id="rC4" type="date" value="${R.c4}"></label>
+   <button class="btn primary full" id="rGen">Розписати в календар</button></div>
+   <div class="status" id="rStatus"></div>`;
+  recPhasesPaint();
+}
+function recPhasesPaint(){
+  const cur=recPhaseNow();
+  $('#rStatus').textContent=recStatus();
+  $('#recPhases').innerHTML=PH.map(p=>{
+    const locked=st.rec.op&&p.id>cur;
+    const ids=[...new Set(p.w.flatMap(k=>WO[k].items))];
+    return `<article class="card rph ${locked?'locked':''}"><h3>${p.t}${cur===p.id?'<span class="badge">Ви тут</span>':''}</h3><div class="sub">${p.s}</div>
+    <div class="gate"><b>Умова:</b> ${p.gate}</div>
+    ${p.w.map(k=>`<div class="wk"><div class="wk-head"><div><b>${WO[k].t}</b><div class="tip">${minsOf(secs(WO[k].items))} хв · ${WO[k].items.length} ${WO[k].items.length===1?'вправа':'вправ'}</div></div><button class="btn small primary" data-wo="${k}">Запустити</button></div></div>`).join('')}
+    <div class="xl">${ids.filter(i=>!i.startsWith('r-walk')).map(i=>`<button data-ex="${i}">${RX[i].n}</button>`).join('')}</div></article>`}).join('');
+}
+$('#recSetup').addEventListener('change',e=>{
+  const R=st.rec;
+  if(e.target.id==='rWho')R.who=+e.target.value;
+  if(e.target.id==='rOp')R.op=e.target.value;
+  if(e.target.id==='rC3')R.c3=e.target.value;
+  if(e.target.id==='rC4')R.c4=e.target.value;
+  save();recPhasesPaint();
+});
+$('#recSetup').addEventListener('click',e=>{
+  if(e.target.id==='rGen'){
+    if(!st.rec.op){$('#rStatus').textContent='Спершу вкажіть дату операції.';return}
+    const n=genRec();
+    $('#rStatus').innerHTML=`Додано в календар: ${n}. Фази 3 і 4 з’являються після дат дозволу лікаря. <button class="btn small" id="rOpenCal" style="margin-left:6px">Відкрити календар</button>`;
+  }
+  if(e.target.id==='rOpenCal'){
+    const d=pd(st.rec.op);st.month=new Date(today.getFullYear(),today.getMonth(),1);st.sel=ymd(today);
+    try{location.hash='calendar'}catch(err){}show('calendar');
+  }
+});
+$('#recPhases').addEventListener('click',e=>{
+  const b=e.target.closest('button');if(!b)return;
+  if(b.dataset.wo)openRp(WO[b.dataset.wo].items,WO[b.dataset.wo].t,null,false);
+  if(b.dataset.ex)openRp([b.dataset.ex],RX[b.dataset.ex].n,null,true);
+});
+
+/* ---------- recovery: player ---------- */
+const RP={list:[],i:0,s:'ready',acc:0,last:0,paused:false,sess:null,single:false,name:'',ex:null,els:null,demo0:0,msg:'',raf:0,lastLabel:''};
+function figSVG(ex){
+  return `<svg viewBox="0 0 240 140" role="img" aria-label="Схема вправи: ${esc(ex.n)}"><line class="fl" x1="10" y1="123" x2="230" y2="123"/>${ex.props||''}
+  <polyline id="fl2" class="body light" points=""/><polyline id="fa2" class="body light" points=""/>
+  <ellipse id="fhl" class="hl" cx="0" cy="0" rx="0" ry="0"/><circle id="fball" class="ball" r="0" cx="0" cy="0"/>
+  <polyline id="fl1" class="body" points=""/><path id="ft" class="body"/><polyline id="fa1" class="body"/><circle id="fh" class="head" r="8"/></svg>`;
+}
+const pts=(...a)=>a.map(p=>p[0].toFixed(1)+','+p[1].toFixed(1)).join(' ');
+function poseAt(ex,v){
+  const A=ex.P[0],B=ex.P[1],r={};
+  for(const k in A){const b=B[k]||A[k];r[k]=[A[k][0]+(b[0]-A[k][0])*v,A[k][1]+(b[1]-A[k][1])*v]}
+  for(const k in B)if(!(k in r))r[k]=B[k];
+  return r;
+}
+function paint(ex,v){
+  const q=poseAt(ex,v),E=RP.els;
+  E.l1.setAttribute('points',pts(q.p,q.k,q.a,q.t));
+  if(q.k2){E.l2.setAttribute('points',pts(q.p,q.k2,q.a2||q.a,q.t2||q.t))}else E.l2.setAttribute('points','');
+  if(q.m){const c=[2*q.m[0]-(q.n[0]+q.p[0])/2,2*q.m[1]-(q.n[1]+q.p[1])/2];E.t.setAttribute('d',`M${q.n[0]} ${q.n[1]} Q${c[0]} ${c[1]} ${q.p[0]} ${q.p[1]}`)}
+  else E.t.setAttribute('d',`M${q.n[0]} ${q.n[1]} L${q.p[0]} ${q.p[1]}`);
+  E.a1.setAttribute('points',pts(q.n,q.e,q.w));
+  E.a2.setAttribute('points',q.e2?pts(q.n,q.e2,q.w2):'');
+  E.h.setAttribute('cx',q.h[0]);E.h.setAttribute('cy',q.h[1]);
+  const hl=ex.hl;
+  E.hl.setAttribute('rx',0);E.hl.setAttribute('ry',0);E.ball.setAttribute('r',0);
+  if(hl){
+    if(hl.k==='belly'){
+      const cx=q.n[0]*.4+q.p[0]*.6,cy=q.n[1]*.4+q.p[1]*.6,ry=hl.m==='expand'?4+8*v:11-6*v;
+      E.hl.setAttribute('cx',cx);E.hl.setAttribute('cy',cy-ry+2);E.hl.setAttribute('rx',20);E.hl.setAttribute('ry',ry);
+    }else if(hl.k==='glow'){
+      const j=q[hl.j];E.hl.setAttribute('cx',j[0]);E.hl.setAttribute('cy',j[1]);const r=8+6*v;E.hl.setAttribute('rx',r);E.hl.setAttribute('ry',r);
+    }else if(hl.k==='ball'){
+      E.ball.setAttribute('cx',(q.k[0]+q.k2[0])/2);E.ball.setAttribute('cy',(q.k[1]+q.k2[1])/2);E.ball.setAttribute('r',9-4*v);
+    }
+  }
+}
+const mmss=s=>{s=Math.max(0,Math.ceil(s));return Math.floor(s/60)+':'+pad(s%60)};
+function openRp(list,name,sess,single){
+  Object.assign(RP,{list:list.filter(id=>RX[id]),i:0,sess,single,name,msg:''});
+  if(!RP.list.length)return;
+  $('#rp').classList.add('open');document.body.style.overflow='hidden';
+  $('#rpSess').textContent=name;
+  loadRp();
+  cancelAnimationFrame(RP.raf);RP.last=performance.now();RP.raf=requestAnimationFrame(frame);
+}
+function closeRp(){cancelAnimationFrame(RP.raf);$('#rp').classList.remove('open');document.body.style.overflow=''}
+function loadRp(){
+  const ex=RX[RP.list[RP.i]];RP.ex=ex;RP.s='ready';RP.acc=0;RP.paused=false;RP.demo0=performance.now();RP.lastLabel='';
+  $('#rpFig').style.display='';$('#rpFig').innerHTML=figSVG(ex);
+  RP.els={l1:$('#fl1'),l2:$('#fl2'),t:$('#ft'),a1:$('#fa1'),a2:$('#fa2'),h:$('#fh'),hl:$('#fhl'),ball:$('#fball')};
+  $('#rpProg').textContent=`Вправа ${RP.i+1} з ${RP.list.length}`;
+  $('#rpBar').style.width='0%';
+  $('#rpInfo').innerHTML=(RP.msg?`<div class="status" style="margin:0 0 10px">${RP.msg}</div>`:'')+`<h2>${esc(ex.n)}</h2><ol class="steps">${ex.steps.map(s=>`<li>${esc(s)}</li>`).join('')}</ol><p class="tip" style="margin:8px 0 0">${esc(ex.tip)}</p>${ex.avoid?`<p class="avoid">${esc(ex.avoid)}</p>`:''}`;
+  rpCtl();
+}
+function rpCtl(){
+  const c=$('#rpCtl'),n=RP.list.length;
+  if(RP.s==='ready')c.innerHTML=(RP.i>0?'<button class="btn big" data-a="back">← Назад</button>':'')+'<button class="btn primary big" data-a="start">Старт</button>'+(RP.i<n-1?'<button class="btn big" data-a="skip">Далі →</button>':'');
+  else if(RP.s==='run')c.innerHTML=`<button class="btn big" data-a="pause">${RP.paused?'Продовжити':'Пауза'}</button><button class="btn big" data-a="stop">Зупинити</button>`;
+  else c.innerHTML=(RP.single?'':'<button class="btn primary big" data-a="mark">Позначити виконаною</button>')+'<button class="btn big" data-a="close">Закрити</button>';
+}
+function rpNext(done){
+  if(RP.i<RP.list.length-1){
+    RP.msg=done?'✓ Вправу виконано. Коли будете готові до наступної, натисніть «Старт».':'';
+    RP.i++;loadRp();
+  }else{
+    RP.s='end';$('#rpFig').style.display='none';$('#rpProg').textContent='Готово';
+    $('#rpInfo').innerHTML=`<h2>${RP.single?'Вправу виконано':'Сесію завершено'}</h2><p style="margin:0">${RP.single?'Можна повторити або вибрати іншу.':'Молодець. Відпочиньте й попийте води.'}</p>`;
+    $('#rpLabel').textContent='';$('#rpTime').textContent='✓';$('#rpReps').textContent='';$('#rpBar').style.width='100%';
+    rpCtl();
+  }
+}
+function frame(now){
+  if(!$('#rp').classList.contains('open'))return;
+  const dt=Math.min(.25,(now-RP.last)/1000);RP.last=now;
+  const ex=RP.ex;
+  if(RP.s!=='end'&&ex){
+    const tot=exTotal(ex);let el;
+    if(RP.s==='run'){
+      if(!RP.paused)RP.acc+=dt;el=RP.acc;
+      if(RP.acc>=tot){beep(988,.4);rpNext(true);RP.raf=requestAnimationFrame(frame);return}
+    }else el=(now-RP.demo0)/1000;
+    const c=cycleAt(ex,el);paint(ex,c.v);
+    if(c.l!==RP.lastLabel){RP.lastLabel=c.l;$('#rpLabel').textContent=c.l}
+    if(RP.s==='run'){
+      $('#rpTime').textContent=mmss(tot-RP.acc);
+      $('#rpReps').textContent=ex.showReps===false?(RP.paused?'пауза':''):`повтор ${Math.min(ex.reps,Math.floor(RP.acc/cycLen(ex))+1)} з ${ex.reps}${RP.paused?' · пауза':''}`;
+      $('#rpBar').style.width=(RP.acc/tot*100)+'%';
+    }else{
+      $('#rpTime').textContent=mmss(tot);
+      $('#rpReps').textContent=ex.showReps===false?'натисніть «Старт»':`${ex.reps} повторів · натисніть «Старт»`;
+    }
+  }
+  RP.raf=requestAnimationFrame(frame);
+}
+$('#rpCtl').addEventListener('click',e=>{
+  const b=e.target.closest('[data-a]');if(!b)return;const a=b.dataset.a;
+  if(a==='start'){beep(880,.2);RP.s='run';RP.acc=0;RP.paused=false;RP.lastLabel='';rpCtl()}
+  else if(a==='pause'){RP.paused=!RP.paused;rpCtl()}
+  else if(a==='stop'){RP.s='ready';RP.acc=0;RP.demo0=performance.now();RP.lastLabel='';$('#rpBar').style.width='0%';rpCtl()}
+  else if(a==='skip'){RP.msg='';RP.i++;loadRp()}
+  else if(a==='back'){RP.msg='';RP.i--;loadRp()}
+  else if(a==='close')closeRp();
+  else if(a==='mark'){
+    const who=st.rec.who,done=[false,false];done[who]=true;
+    if(RP.sess){const s=st.sessions.find(x=>x.id===RP.sess);if(s)s.done[who]=true}
+    else st.sessions.push({id:uid(),date:ymd(new Date()),time:'',title:RP.name||'Відновлення',minutes:minsOf(secs(RP.list)),done,items:[...RP.list],rec:true});
+    save();closeRp();st.sel=ymd(new Date());st.month=new Date(today.getFullYear(),today.getMonth(),1);
+    try{location.hash='calendar'}catch(err){}show('calendar');
+  }
+});
+$('#rpClose').addEventListener('click',closeRp);
+
+/* ---------- init ---------- */
+renderFilters();renderEx();updateCount();
+show(location.hash.slice(1)||'exercises');
+})();
+</script>
+</body>
+</html>
